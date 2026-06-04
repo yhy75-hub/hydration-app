@@ -299,5 +299,5 @@ function showToast(msg) {
 
 // ===== Service Worker登録 =====
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(console.error);
+  navigator.serviceWorker.register('./firebase-messaging-sw.js').catch(console.error);
 }
