@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="水分記録">
+  <title>水分補給記録</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- ===== PINロック画面 ===== -->
+<div id="pin-screen" class="pin-screen hidden">
+  <div class="pin-box">
+    <div class="pin-icon">💧</div>
+    <div class="pin-title">水分補給記録</div>
+    <div class="pin-subtitle">PINコードを入力してね</div>
+    <div id="pin-dots" class="pin-dots">
+      <span class="pin-dot"></span>
+      <span class="pin-dot"></span>
+      <span class="pin-dot"></span>
+      <span class="pin-dot"></span>
+    </div>
+    <div id="pin-error" class="pin-error hidden">PINが違うよ、もう一度！</div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="Pin.input('1')">1</button>
+      <button class="pin-key" onclick="Pin.input('2')">2</button>
+      <button class="pin-key" onclick="Pin.input('3')">3</button>
+      <button class="pin-key" onclick="Pin.input('4')">4</button>
+      <button class="pin-key" onclick="Pin.input('5')">5</button>
+      <button class="pin-key" onclick="Pin.input('6')">6</button>
+      <button class="pin-key" onclick="Pin.input('7')">7</button>
+      <button class="pin-key" onclick="Pin.input('8')">8</button>
+      <button class="pin-key" onclick="Pin.input('9')">9</button>
+      <button class="pin-key pin-key-empty"></button>
+      <button class="pin-key" onclick="Pin.input('0')">0</button>
+      <button class="pin-key pin-key-del" onclick="Pin.delete()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ヘッダー ===== -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-title">
+      <span class="header-icon">💧</span>
+      <span>水分補給記録</span>
+    </div>
+    <div id="date-display" class="header-date"></div>
+  </div>
+</header>
+
+<!-- ===== タブ ===== -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="record">記録</button>
+  <button class="tab-btn" data-tab="history">履歴</button>
+  <button class="tab-btn" data-tab="settings">設定</button>
+</nav>
+
+<!-- ===== メインコンテンツ ===== -->
+<main class="main">
+
+  <!-- 記録タブ -->
+  <section id="tab-record" class="tab-content active">
+
+    <!-- ユーザー選択 -->
+    <div class="card">
+      <div class="card-label">あなたの名前</div>
+      <div id="member-select" class="member-grid"></div>
+    </div>
+
+    <!-- 水分補給ボタン -->
+    <div class="card record-card">
+      <button id="btn-drink" class="btn-drink" onclick="App.openRecordModal()">
+        <span class="btn-drink-icon">💧</span>
+        <span class="btn-drink-text">水分を摂った！</span>
+      </button>
+    </div>
+
+    <!-- 今日の記録 -->
+    <div class="card">
+      <div class="card-label">今日の記録</div>
+      <div id="today-records" class="record-list">
+        <div class="empty-msg">まだ記録がないよ</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- 履歴タブ -->
+  <section id="tab-history" class="tab-content">
+    <div class="card">
+      <div class="card-label">過去の記録</div>
+      <input type="date" id="history-date" class="date-input">
+      <div id="history-records" class="record-list">
+        <div class="empty-msg">日付を選択してね</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 設定タブ -->
+  <section id="tab-settings" class="tab-content">
+    <div class="card">
+      <div class="card-label">📅 今日を休日に設定</div>
+      <div class="holiday-row">
+        <span id="holiday-date-label"></span>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="holiday-toggle" onchange="App.toggleHoliday(this.checked)">
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div class="hint">ONにすると今日の通知が届かないよ</div>
+    </div>
+    <div class="card">
+      <div class="card-label">🔔 通知許可</div>
+      <button class="btn-secondary" onclick="App.requestNotification()">通知を許可する</button>
+      <div id="notify-status" class="hint"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">📋 通知スケジュール</div>
+      <ul class="schedule-list">
+        <li><span class="time">07:50</span><span>朝の水分補給チェック</span></li>
+        <li><span class="time">10:00</span><span>午前休憩</span></li>
+        <li><span class="time">12:50</span><span>午後スタート</span></li>
+        <li><span class="time">15:00</span><span>午後休憩</span></li>
+        <li><span class="time">17:00</span><span>未記録者のみアラート</span></li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== 記録モーダル ===== -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="App.closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">💧 水分補給を記録</div>
+
+    <div class="modal-section">
+      <div class="modal-label">体調はどう？</div>
+      <div class="condition-grid">
+        <button class="cond-btn" data-value="良好" onclick="App.selectCondition(this)">😊<br>良好</button>
+        <button class="cond-btn" data-value="普通" onclick="App.selectCondition(this)">😐<br>普通</button>
+        <button class="cond-btn" data-value="だるい" onclick="App.selectCondition(this)">😓<br>だるい</button>
+        <button class="cond-btn" data-value="不調" onclick="App.selectCondition(this)">🤒<br>不調</button>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">コメント（任意）</div>
+      <textarea id="comment-input" class="comment-input" placeholder="気になることがあれば..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="App.closeModal()">キャンセル</button>
+      <button class="btn-submit" onclick="App.submitRecord()">記録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== トースト ===== -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
