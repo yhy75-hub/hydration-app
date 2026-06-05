@@ -76,16 +76,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   Pin.init();
   renderHeader();
   renderMemberGrid();
-  await loadTodayRecords();
-  await checkHolidayStatus();
-  initTabs();
+  initTabs();   // ← 最初に呼ぶ（タブをすぐ触れるように）
   initFirebase();
-  // 通知許可を自動リクエスト
-  App.requestNotification();
 
   // 履歴日付の初期値
   document.getElementById('history-date').value = state.today;
   document.getElementById('history-date').addEventListener('change', e => loadHistoryRecords(e.target.value));
+
+  // GAS通信（非同期で後から読み込む）
+  await loadTodayRecords();
+  await checkHolidayStatus();
+
+  // 通知許可を自動リクエスト
+  App.requestNotification();
 });
 
 // ===== ヘッダー =====
