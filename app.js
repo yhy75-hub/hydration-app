@@ -93,9 +93,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // ===== ヘッダー =====
 function renderHeader() {
-  const d = new Date();
-  document.getElementById('date-display').textContent =
-    `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}（${['日', '月', '火', '水', '木', '金', '土'][d.getDay()]}）`;
+  const update = () => {
+    const d = new Date();
+    const date = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}（${['日', '月', '火', '水', '木', '金', '土'][d.getDay()]}）`;
+    const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    document.getElementById('date-display').textContent = `${date}　${time}`;
+  };
+  update();
+  setInterval(update, 1000);
 }
 
 // ===== メンバーグリッド =====
