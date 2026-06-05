@@ -14,6 +14,7 @@ const COND_RANK = { 不調: 0, だるい: 1, 普通: 2, 良好: 3, 未選択: 4 
 let currentWeekStart = getWeekStart(new Date());
 let currentDay = toDateStr(new Date());
 let allWeekRecords = [];
+let holidayDates = []; // 休日マスター＋手動設定の休日リスト
 
 // ===== PIN認証 =====
 const Pin = {
@@ -80,8 +81,12 @@ const Admin = {
       `${formatDate(currentWeekStart)} 〜 ${formatDate(endDate)}`;
 
     try {
-      const res = await gasGet({ action: 'getWeekRecords', startDate: startStr, endDate: endStr });
-      allWeekRecords = res.records || [];
+      const [recRes, holRes] = await Promise.all([
+        gasGet({action:'getWeekRecords', startDate:startStr, endDate:endStr}),
+        gasGet({action:'getHolidays', startDate:startStr, endDate:endStr})
+      ]);
+      allWeekRecords = recRes.records || [];
+      holidayDates = holRes.holidays || [];
       this.renderWeekTable(startStr, endStr);
       this.renderSummaryCards();
     } catch (e) {
@@ -115,7 +120,8 @@ const Admin = {
   _buildCell(date, name, recs) {
     const dow = new Date(date + 'T00:00:00').getDay();
     const isWeekend = dow === 0 || dow === 6;
-    if (isWeekend) return `<td><span class="badge badge-off">休</span></td>`;
+    const isHoliday = holidayDates.includes(date);
+    if (isWeekend || isHoliday) return `<td><span class="badge badge-off">休</span></td>`;
     if (recs.length === 0) return `<td><button class="cell-btn" onclick="Admin.showDetail('${date}','${name}')"><span class="badge badge-none">-</span></button></td>`;
 
     // 最悪の体調を表示
@@ -129,7 +135,10 @@ const Admin = {
     const endDate = new Date(currentWeekStart);
     endDate.setDate(endDate.getDate() + 6);
     const dates = getDatesInRange(toDateStr(currentWeekStart), toDateStr(endDate))
-      .filter(d => { const dow = new Date(d + 'T00:00:00').getDay(); return dow !== 0 && dow !== 6; });
+      .filter(d => {
+        const dow = new Date(d + 'T00:00:00').getDay();
+        return dow !== 0 && dow !== 6 && !holidayDates.includes(d);
+      });
 
     const cards = MEMBERS.map(member => {
       const recs = allWeekRecords.filter(r => r.name === member);
