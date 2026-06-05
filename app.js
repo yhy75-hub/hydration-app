@@ -265,13 +265,19 @@ function renderRecords(elId, records) {
 
 // ===== 休日状態を確認 =====
 async function checkHolidayStatus() {
-  const label = document.getElementById('holiday-date-label');
   const toggle = document.getElementById('holiday-toggle');
-  label.textContent = `${state.today}（今日）`;
+  const hint = document.getElementById('holiday-hint');
   try {
-    const res = await gasGet({ action: 'isHoliday', date: state.today });
+    const res = await gasGet({action:'isHoliday', date:state.today});
     toggle.checked = res.isHoliday;
-  } catch (e) { }
+    if(res.isHoliday && res.reason !== '手動設定') {
+      toggle.disabled = true;
+      hint.textContent = `🔕 ${res.reason}のため通知は自動でOFFだよ`;
+    } else {
+      toggle.disabled = false;
+      hint.textContent = 'ONにすると今日の通知が届かないよ（臨時休業用）';
+    }
+  } catch(e) {}
 }
 
 // ===== GAS通信 =====
