@@ -80,6 +80,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   await checkHolidayStatus();
   initTabs();
   initFirebase();
+  // 通知許可を自動リクエスト
+  App.requestNotification();
 
   // 履歴日付の初期値
   document.getElementById('history-date').value = state.today;
@@ -299,5 +301,5 @@ function showToast(msg) {
 
 // ===== Service Worker登録 =====
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./firebase-messaging-sw.js').catch(console.error);
+  navigator.serviceWorker.register('./firebase-messaging-sw.js?v=2').catch(console.error);
 }
