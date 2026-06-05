@@ -5,7 +5,7 @@
 // ===== 【要変更】設定 =====
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxeueMWOxm-wLt3G6T70Oc6zldEqTTBXBQeqyx5dewwB-2vnXZoJBRHsdT847Tr81hJ/exec'; // app.jsと同じURL
 const ADMIN_PIN = '0000';              // ← 管理者用PINに変更
-const MEMBERS = ['田中', '佐藤', '鈴木', '山田', '伊藤', '渡辺'];
+const MEMBERS = ['山本', '細江', '本城', '林', '四ツ木', '横塚'];
 const CONDITION_EMOJI = { 良好: '😊', 普通: '😐', だるい: '😓', 不調: '🤒', 未選択: '💧' };
 // 体調の優先度（悪い順）
 const COND_RANK = { 不調: 0, だるい: 1, 普通: 2, 良好: 3, 未選択: 4 };
