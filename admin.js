@@ -165,12 +165,15 @@ const Admin = {
   // ===== 日次 =====
   async loadDay() {
     currentDay = document.getElementById('day-picker').value || currentDay;
+    this.renderMemberFilter();
     try {
       const res = await gasGet({action:'getRecords', date:currentDay});
       allDayRecords = res.records || [];
-      this.renderMemberFilter();
-      this.applyDayFilter();
-    } catch(e) { console.error(e); }
+    } catch(e) {
+      console.error(e);
+      allDayRecords = [];
+    }
+    this.applyDayFilter();
   },
 
   renderMemberFilter() {
