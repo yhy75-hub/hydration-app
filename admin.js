@@ -178,6 +178,7 @@ const Admin = {
 
   renderMemberFilter() {
     const el = document.getElementById('member-filter');
+    if (!el) return;
     el.innerHTML = ['all', ...MEMBERS].map(m => `
       <button class="filter-btn ${selectedMember===m?'active':''}"
         onclick="Admin.selectMember('${m}')">
