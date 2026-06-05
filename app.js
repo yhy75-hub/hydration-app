@@ -216,11 +216,12 @@ const App = {
     }
   },
 
-  // 休日トグル
+  // 休日トグル（個人休）
   async toggleHoliday(checked) {
+    if (!state.member) { showToast('⚠️ 先に名前を選んでね'); document.getElementById('holiday-toggle').checked = false; return; }
     const action = checked ? 'setHoliday' : 'removeHoliday';
-    await gasPost({ action, date: state.today });
-    showToast(checked ? '🏖 今日を休日に設定したよ' : '🔔 今日の休日設定を解除したよ');
+    await gasPost({ action, date: state.today, name: state.member });
+    showToast(checked ? '🏖 今日は休みに設定したよ' : '🔔 今日の休み設定を解除したよ');
   }
 };
 
@@ -268,14 +269,14 @@ async function checkHolidayStatus() {
   const toggle = document.getElementById('holiday-toggle');
   const hint = document.getElementById('holiday-hint');
   try {
-    const res = await gasGet({action:'isHoliday', date:state.today});
+    const res = await gasGet({action:'isHoliday', date:state.today, name: state.member || ''});
     toggle.checked = res.isHoliday;
-    if(res.isHoliday && res.reason !== '手動設定') {
+    if(res.isHoliday && res.reason !== '個人休') {
       toggle.disabled = true;
       hint.textContent = `🔕 ${res.reason}のため通知は自動でOFFだよ`;
     } else {
       toggle.disabled = false;
-      hint.textContent = 'ONにすると今日の通知が届かないよ（臨時休業用）';
+      hint.textContent = 'ONにすると今日の通知が届かないよ（有給・個人休用）';
     }
   } catch(e) {}
 }
