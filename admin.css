@@ -89,6 +89,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sa
 .summary-card .s-label{font-size:.75rem;color:var(--sub);}
 .summary-card .s-cond{font-size:.8rem;margin-top:4px;}
 
+/* ===== メンバーフィルター ===== */
+.member-filter{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.filter-btn{padding:7px 14px;border:2px solid var(--border);border-radius:20px;background:#fff;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--sub);transition:all .2s;}
+.filter-btn:hover{border-color:var(--primary);color:var(--primary);}
+.filter-btn.active{border-color:var(--primary);background:var(--primary);color:#fff;}
+
 /* ===== 日次テーブル ===== */
 .day-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);}
 .day-table th{background:#f8fafc;padding:10px 12px;font-size:.8rem;color:var(--sub);text-align:left;border-bottom:2px solid var(--border);}

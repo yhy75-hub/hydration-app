@@ -14,7 +14,9 @@ const COND_RANK = { 不調: 0, だるい: 1, 普通: 2, 良好: 3, 未選択: 4 
 let currentWeekStart = getWeekStart(new Date());
 let currentDay = toDateStr(new Date());
 let allWeekRecords = [];
-let holidayDates = []; // 休日マスター＋手動設定の休日リスト
+let holidayDates = [];
+let allDayRecords = [];
+let selectedMember = 'all'; // 日次フィルター
 
 // ===== PIN認証 =====
 const Pin = {
@@ -164,38 +166,62 @@ const Admin = {
   async loadDay() {
     currentDay = document.getElementById('day-picker').value || currentDay;
     try {
-      const res = await gasGet({ action: 'getRecords', date: currentDay });
-      const records = res.records || [];
-      this.renderDayTable(records);
-      this.renderDaySummary(records);
-    } catch (e) { console.error(e); }
+      const res = await gasGet({action:'getRecords', date:currentDay});
+      allDayRecords = res.records || [];
+      this.renderMemberFilter();
+      this.applyDayFilter();
+    } catch(e) { console.error(e); }
+  },
+
+  renderMemberFilter() {
+    const el = document.getElementById('member-filter');
+    el.innerHTML = ['all', ...MEMBERS].map(m => `
+      <button class="filter-btn ${selectedMember===m?'active':''}"
+        onclick="Admin.selectMember('${m}')">
+        ${m==='all'?'全員':m}
+      </button>`).join('');
+  },
+
+  selectMember(name) {
+    selectedMember = name;
+    this.renderMemberFilter();
+    this.applyDayFilter();
+  },
+
+  applyDayFilter() {
+    const filtered = selectedMember === 'all'
+      ? allDayRecords
+      : allDayRecords.filter(r => r.name === selectedMember);
+    this.renderDayTable(filtered);
+    this.renderDaySummary(filtered);
   },
 
   renderDayTable(records) {
     const body = document.getElementById('day-body');
-    if (!records.length) {
+    if(!records.length) {
       body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:24px">記録がないよ</td></tr>';
       return;
     }
     body.innerHTML = records.map(r => `
       <tr>
-        <td>${r.time || ''}</td>
+        <td>${r.time||''}</td>
         <td><strong>${r.name}</strong></td>
-        <td><div class="cond-cell">${CONDITION_EMOJI[r.condition] || '💧'} ${r.condition || ''}</div></td>
-        <td style="color:var(--sub)">${r.comment || '-'}</td>
+        <td><div class="cond-cell">${CONDITION_EMOJI[r.condition]||'💧'} ${r.condition||''}</div></td>
+        <td style="color:var(--sub)">${r.comment||'-'}</td>
       </tr>`).join('');
   },
 
   renderDaySummary(records) {
     const total = records.length;
     const members = [...new Set(records.map(r => r.name))].length;
-    const unrecorded = MEMBERS.length - members;
-    const bad = records.filter(r => r.condition === '不調' || r.condition === 'だるい').length;
+    const targetCount = selectedMember === 'all' ? MEMBERS.length : 1;
+    const unrecorded = targetCount - members;
+    const bad = records.filter(r => r.condition==='不調'||r.condition==='だるい').length;
     document.getElementById('day-summary').innerHTML = `
-      <div class="day-stat"><div class="ds-num">${total}</div><div class="ds-label">総記録件数</div></div>
-      <div class="day-stat"><div class="ds-num">${members}</div><div class="ds-label">記録したメンバー</div></div>
-      <div class="day-stat"><div class="ds-num" style="color:${unrecorded > 0 ? 'var(--danger)' : 'var(--ok)'}">${unrecorded}</div><div class="ds-label">未記録メンバー</div></div>
-      <div class="day-stat"><div class="ds-num" style="color:${bad > 0 ? 'var(--warn)' : 'var(--ok)'}">${bad}</div><div class="ds-label">体調不良・だるい</div></div>`;
+      <div class="day-stat"><div class="ds-num">${total}</div><div class="ds-label">記録件数</div></div>
+      <div class="day-stat"><div class="ds-num">${members}</div><div class="ds-label">記録メンバー</div></div>
+      <div class="day-stat"><div class="ds-num" style="color:${unrecorded>0?'var(--danger)':'var(--ok)'}">${unrecorded}</div><div class="ds-label">未記録</div></div>
+      <div class="day-stat"><div class="ds-num" style="color:${bad>0?'var(--warn)':'var(--ok)'}">${bad}</div><div class="ds-label">体調不良</div></div>`;
   },
 
   prevDay() {
