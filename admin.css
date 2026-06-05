@@ -1,0 +1,117 @@
+/* ===== 共通 ===== */
+*, *::before, *::after {box-sizing:border-box; margin:0; padding:0;}
+:root {
+  --primary:#0ea5e9; --primary-dark:#0284c7;
+  --bg:#f0f9ff; --card:#fff;
+  --text:#0f172a; --sub:#64748b;
+  --border:#e2e8f0;
+  --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; --off:#94a3b8;
+  --radius:12px; --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+html{font-size:15px;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sans-serif;background:var(--bg);color:var(--text);}
+.hidden{display:none!important;}
+
+/* ===== PINロック ===== */
+.pin-screen{position:fixed;inset:0;background:linear-gradient(160deg,#0ea5e9,#0369a1);display:flex;align-items:center;justify-content:center;z-index:999;}
+.pin-box{text-align:center;color:#fff;width:100%;max-width:320px;padding:0 24px;}
+.pin-icon{font-size:3rem;margin-bottom:8px;}
+.pin-title{font-size:1.4rem;font-weight:700;margin-bottom:4px;}
+.pin-subtitle{font-size:.9rem;opacity:.8;margin-bottom:32px;}
+.pin-dots{display:flex;justify-content:center;gap:16px;margin-bottom:12px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.3);transition:background .15s;}
+.pin-dot.filled{background:#fff;}
+.pin-error{color:#fca5a5;font-size:.85rem;margin-bottom:8px;}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px;}
+.pin-key{padding:18px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:1.3rem;font-weight:600;cursor:pointer;transition:background .15s;}
+.pin-key:active{background:rgba(255,255,255,.4);}
+.pin-key-empty{background:transparent!important;cursor:default;}
+.pin-key-del{font-size:1.1rem;}
+
+/* ===== ヘッダー ===== */
+.header{background:var(--primary);color:#fff;padding:14px 20px;box-shadow:0 2px 8px rgba(14,165,233,.3);}
+.header-inner{display:flex;justify-content:space-between;align-items:center;max-width:1100px;margin:0 auto;}
+.header-title{font-size:1.1rem;font-weight:700;}
+.header-link{color:rgba(255,255,255,.85);font-size:.85rem;text-decoration:none;}
+.header-link:hover{color:#fff;}
+
+/* ===== タブ ===== */
+.tab-nav{display:flex;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:90;}
+.tab-btn{flex:1;padding:12px;border:none;background:none;font-size:.95rem;color:var(--sub);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:700;}
+
+/* ===== メイン ===== */
+.main{padding:16px;max-width:1100px;margin:0 auto;}
+.tab-content{display:block;}
+.tab-content.hidden{display:none;}
+
+/* ===== ツールバー ===== */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.nav-btn{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:1rem;}
+.nav-btn:hover{background:#f1f5f9;}
+.week-label{font-size:1rem;font-weight:700;min-width:180px;text-align:center;}
+.today-btn{padding:8px 16px;border:none;border-radius:8px;background:var(--primary);color:#fff;cursor:pointer;font-size:.85rem;font-weight:600;}
+.day-picker{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;}
+
+/* ===== 凡例 ===== */
+.legend{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--sub);}
+
+/* ===== バッジ ===== */
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 6px;border-radius:8px;font-size:.8rem;font-weight:700;}
+.badge-ok{background:#dcfce7;color:#16a34a;}
+.badge-warn{background:#fef9c3;color:#ca8a04;}
+.badge-danger{background:#fee2e2;color:#dc2626;}
+.badge-none{background:#f1f5f9;color:#94a3b8;}
+.badge-off{background:#e2e8f0;color:#64748b;}
+
+/* ===== 週次テーブル ===== */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);box-shadow:var(--shadow);}
+.week-table{width:100%;border-collapse:collapse;background:#fff;min-width:500px;}
+.week-table th{background:var(--primary);color:#fff;padding:10px 8px;font-size:.8rem;text-align:center;white-space:nowrap;}
+.week-table th.col-name{background:#0369a1;text-align:left;padding-left:12px;}
+.week-table td{padding:8px;text-align:center;border-bottom:1px solid var(--border);vertical-align:middle;}
+.week-table td.name-cell{text-align:left;padding-left:12px;font-weight:600;font-size:.9rem;white-space:nowrap;}
+.week-table tr:last-child td{border-bottom:none;}
+.week-table tr:hover td{background:#f8fafc;}
+.cell-btn{background:none;border:none;cursor:pointer;padding:2px;}
+.cell-btn:hover .badge{filter:brightness(.95);}
+.date-header{font-size:.85rem;font-weight:700;}
+.dow-header{font-size:.75rem;opacity:.85;}
+.dow-sat{color:#93c5fd;}
+.dow-sun{color:#fca5a5;}
+
+/* ===== サマリーカード ===== */
+.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:16px;}
+.summary-card{background:#fff;border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center;}
+.summary-card .s-name{font-size:.85rem;font-weight:700;margin-bottom:8px;}
+.summary-card .s-count{font-size:1.8rem;font-weight:800;color:var(--primary);}
+.summary-card .s-label{font-size:.75rem;color:var(--sub);}
+.summary-card .s-cond{font-size:.8rem;margin-top:4px;}
+
+/* ===== 日次テーブル ===== */
+.day-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);}
+.day-table th{background:#f8fafc;padding:10px 12px;font-size:.8rem;color:var(--sub);text-align:left;border-bottom:2px solid var(--border);}
+.day-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:.9rem;}
+.day-table tr:last-child td{border-bottom:none;}
+.day-table tr:hover td{background:#f8fafc;}
+.cond-cell{display:flex;align-items:center;gap:6px;}
+
+/* ===== 日次サマリー ===== */
+.day-summary{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.day-stat{background:#fff;border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;min-width:100px;}
+.day-stat .ds-num{font-size:1.6rem;font-weight:800;color:var(--primary);}
+.day-stat .ds-label{font-size:.75rem;color:var(--sub);}
+
+/* ===== モーダル ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.modal{background:#fff;width:100%;max-width:600px;border-radius:16px;padding:24px;max-height:80vh;overflow-y:auto;}
+.modal-title{font-size:1.1rem;font-weight:700;margin-bottom:16px;}
+.modal-close{margin-top:16px;width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;font-size:.95rem;}
+
+/* ===== レスポンシブ ===== */
+@media(max-width:600px){
+  .week-label{min-width:120px;font-size:.9rem;}
+  .main{padding:12px;}
+  .summary-card .s-count{font-size:1.4rem;}
+}

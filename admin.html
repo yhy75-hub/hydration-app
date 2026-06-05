@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理者ダッシュボード｜水分補給記録</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ===== PINロック ===== -->
+<div id="pin-screen" class="pin-screen">
+  <div class="pin-box">
+    <div class="pin-icon">🔐</div>
+    <div class="pin-title">管理者ログイン</div>
+    <div class="pin-subtitle">管理者PINを入力してね</div>
+    <div id="pin-dots" class="pin-dots">
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <div id="pin-error" class="pin-error hidden">PINが違うよ、もう一度！</div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="Pin.input('1')">1</button>
+      <button class="pin-key" onclick="Pin.input('2')">2</button>
+      <button class="pin-key" onclick="Pin.input('3')">3</button>
+      <button class="pin-key" onclick="Pin.input('4')">4</button>
+      <button class="pin-key" onclick="Pin.input('5')">5</button>
+      <button class="pin-key" onclick="Pin.input('6')">6</button>
+      <button class="pin-key" onclick="Pin.input('7')">7</button>
+      <button class="pin-key" onclick="Pin.input('8')">8</button>
+      <button class="pin-key" onclick="Pin.input('9')">9</button>
+      <button class="pin-key pin-key-empty"></button>
+      <button class="pin-key" onclick="Pin.input('0')">0</button>
+      <button class="pin-key pin-key-del" onclick="Pin.delete()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== メイン ===== -->
+<div id="app" class="hidden">
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-title">📊 管理者ダッシュボード</div>
+      <a href="index.html" class="header-link">← 記録画面</a>
+    </div>
+  </header>
+
+  <!-- タブ -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="Admin.switchTab('week', this)">週次ビュー</button>
+    <button class="tab-btn" onclick="Admin.switchTab('day', this)">日次ビュー</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- ===== 週次ビュー ===== -->
+    <section id="tab-week" class="tab-content active">
+      <div class="toolbar">
+        <button class="nav-btn" onclick="Admin.prevWeek()">◀</button>
+        <span id="week-label" class="week-label"></span>
+        <button class="nav-btn" onclick="Admin.nextWeek()">▶</button>
+        <button class="today-btn" onclick="Admin.goToThisWeek()">今週</button>
+      </div>
+
+      <div class="legend">
+        <span class="leg-item"><span class="badge badge-ok">3</span> 記録あり（件数）</span>
+        <span class="leg-item"><span class="badge badge-none">-</span> 未記録</span>
+        <span class="leg-item"><span class="badge badge-off">休</span> 休日</span>
+      </div>
+
+      <div class="table-wrap">
+        <table id="week-table" class="week-table">
+          <thead><tr id="week-header"></tr></thead>
+          <tbody id="week-body"></tbody>
+        </table>
+      </div>
+
+      <div class="summary-cards" id="summary-cards"></div>
+    </section>
+
+    <!-- ===== 日次ビュー ===== -->
+    <section id="tab-day" class="tab-content hidden">
+      <div class="toolbar">
+        <button class="nav-btn" onclick="Admin.prevDay()">◀</button>
+        <input type="date" id="day-picker" class="day-picker" onchange="Admin.loadDay()">
+        <button class="nav-btn" onclick="Admin.nextDay()">▶</button>
+        <button class="today-btn" onclick="Admin.goToToday()">今日</button>
+      </div>
+
+      <div id="day-summary" class="day-summary"></div>
+
+      <div class="table-wrap">
+        <table class="day-table">
+          <thead>
+            <tr>
+              <th>時刻</th><th>名前</th><th>体調</th><th>コメント</th>
+            </tr>
+          </thead>
+          <tbody id="day-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== 詳細モーダル ===== -->
+<div id="modal" class="modal-overlay hidden" onclick="Admin.closeModal(event)">
+  <div class="modal">
+    <div id="modal-title" class="modal-title"></div>
+    <table class="day-table">
+      <thead><tr><th>時刻</th><th>名前</th><th>体調</th><th>コメント</th></tr></thead>
+      <tbody id="modal-body"></tbody>
+    </table>
+    <button class="modal-close" onclick="Admin.closeModal()">閉じる</button>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
