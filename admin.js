@@ -63,6 +63,9 @@ const Admin = {
     document.getElementById('day-picker').value = currentDay;
     this.loadWeek();
     this.loadDay();
+    if(localStorage.getItem('admin_notify_registered') === '1') {
+      document.querySelector('.admin-notify-bar').style.display = 'none';
+    }
   },
 
   switchTab(tab, btn) {
@@ -278,8 +281,8 @@ const Admin = {
         serviceWorkerRegistration: reg
       });
       await gasPost({ action: 'registerAdminToken', token });
-      statusEl.textContent = '✅ この端末に未記録アラートが届くよ！';
-      document.querySelector('.admin-notify-btn').style.display = 'none';
+      localStorage.setItem('admin_notify_registered', '1');
+      document.querySelector('.admin-notify-bar').style.display = 'none';
     } catch(e) {
       statusEl.textContent = '❌ エラー: ' + e.message;
     }
