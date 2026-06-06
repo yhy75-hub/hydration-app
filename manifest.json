@@ -2,13 +2,14 @@
   "name": "水分補給記録",
   "short_name": "水分記録",
   "description": "熱中症対策のための水分補給記録アプリ",
-  "start_url": "/",
+  "start_url": "/hydration-app/",
+  "scope": "/hydration-app/",
   "display": "standalone",
   "background_color": "#0ea5e9",
   "theme_color": "#0ea5e9",
   "orientation": "portrait",
   "icons": [
-    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png"}
+    {"src": "/hydration-app/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/hydration-app/icons/icon-512.png", "sizes": "512x512", "type": "image/png"}
   ]
 }
