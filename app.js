@@ -198,7 +198,13 @@ const App = {
   async requestNotification() {
     const statusEl = document.getElementById('notify-status');
     if (!('Notification' in window)) {
-      statusEl.textContent = '❌ このブラウザは通知に対応していないよ';
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      if (isIOS && !isStandalone) {
+        statusEl.innerHTML = '📱 iOSの場合はSafariで<br>「共有 → ホーム画面に追加」してから<br>ホーム画面のアイコンで起動してね';
+      } else {
+        statusEl.textContent = '❌ このブラウザは通知に対応していないよ';
+      }
       return;
     }
     const permission = await Notification.requestPermission();
