@@ -52,6 +52,12 @@
     <button class="tab-btn" onclick="Admin.switchTab('day', this)">日次ビュー</button>
   </nav>
 
+  <!-- 管理者通知設定バナー -->
+  <div class="admin-notify-bar">
+    <span id="admin-notify-status">🔔 未記録アラートを受け取るにはこの端末を登録してね</span>
+    <button class="admin-notify-btn" onclick="Admin.registerNotification()">通知を受け取る</button>
+  </div>
+
   <main class="main">
 
     <!-- ===== 週次ビュー ===== -->

@@ -248,6 +248,43 @@ const Admin = {
     this.loadDay();
   },
 
+  // ===== 管理者通知登録 =====
+  async registerNotification() {
+    const statusEl = document.getElementById('admin-notify-status');
+    if (!('Notification' in window)) {
+      statusEl.textContent = '❌ このブラウザは通知に対応していないよ';
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      statusEl.textContent = '❌ 通知が拒否されたよ。設定から許可してね';
+      return;
+    }
+    try {
+      firebase.initializeApp({
+        apiKey: 'AIzaSyAX1QmJoIVN67GKMoXV1oIbNmV1bk-E2aM',
+        authDomain: 'hydration-850bd.firebaseapp.com',
+        projectId: 'hydration-850bd',
+        storageBucket: 'hydration-850bd.firebasestorage.app',
+        messagingSenderId: '385339912693',
+        appId: '1:385339912693:web:4db23ab0e1e6f8c35630bc'
+      });
+    } catch(e) {}
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const messaging = firebase.messaging();
+      const token = await messaging.getToken({
+        vapidKey: 'BF3hSqNizcMk5kYnP7-c-nneSnNIh8cCMQdCp-kV0UP6AmsbWSd7OB06YQ3yC23Ds86ykT-CNm94UIgEYCxMHEw',
+        serviceWorkerRegistration: reg
+      });
+      await gasPost({ action: 'registerAdminToken', token });
+      statusEl.textContent = '✅ この端末に未記録アラートが届くよ！';
+      document.querySelector('.admin-notify-btn').style.display = 'none';
+    } catch(e) {
+      statusEl.textContent = '❌ エラー: ' + e.message;
+    }
+  },
+
   // ===== 詳細モーダル =====
   showDetail(date, name) {
     const recs = allWeekRecords.filter(r => r.date === date && r.name === name);
@@ -277,6 +314,11 @@ const Admin = {
 async function gasGet(params) {
   const qs = new URLSearchParams(params).toString();
   const res = await fetch(`${GAS_URL}?${qs}`);
+  return res.json();
+}
+
+async function gasPost(body) {
+  const res = await fetch(GAS_URL, {method:'POST', body:JSON.stringify(body)});
   return res.json();
 }
 

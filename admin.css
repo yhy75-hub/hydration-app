@@ -40,6 +40,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sa
 .tab-btn{flex:1;padding:12px;border:none;background:none;font-size:.95rem;color:var(--sub);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;}
 .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:700;}
 
+/* ===== 管理者通知バナー ===== */
+.admin-notify-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fefce8;border-bottom:1px solid #fde047;padding:10px 20px;font-size:.85rem;color:#854d0e;flex-wrap:wrap;}
+.admin-notify-btn{padding:6px 14px;border:none;border-radius:8px;background:#f59e0b;color:#fff;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+.admin-notify-btn:hover{background:#d97706;}
+
 /* ===== メイン ===== */
 .main{padding:16px;max-width:1100px;margin:0 auto;}
 .tab-content{display:block;}
