@@ -14,25 +14,28 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // バックグラウンド通知受信
+const APP_URL = '/hydration-app/';
+
 messaging.onBackgroundMessage(payload => {
   const { title, body } = payload.notification;
   self.registration.showNotification(title, {
     body,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    icon: '/hydration-app/icons/icon-192.png',
+    badge: '/hydration-app/icons/icon-192.png',
     tag: 'hydration',
     renotify: true,
-    data: { url: '/' }
+    data: { url: APP_URL }
   });
 });
 
 // 通知タップで画面を開く
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+  const targetUrl = (e.notification.data && e.notification.data.url) || APP_URL;
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      const existing = list.find(c => c.url.includes(self.location.origin));
-      return existing ? existing.focus() : clients.openWindow('/');
+      const existing = list.find(c => c.url.includes(APP_URL));
+      return existing ? existing.focus() : clients.openWindow(targetUrl);
     })
   );
 });
