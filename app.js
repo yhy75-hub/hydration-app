@@ -86,6 +86,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   // GAS通信（非同期で後から読み込む）
   await loadTodayRecords();
   await checkHolidayStatus();
+  loadWbgt();
+  setInterval(loadWbgt, 20 * 60 * 1000);
 
   // 通知許可を自動リクエスト
   App.requestNotification();
@@ -290,6 +292,19 @@ async function checkHolidayStatus() {
       hint.textContent = 'ONにすると今日の通知が届かないよ（有給・個人休用）';
     }
   } catch(e) {}
+}
+
+// ===== WBGT表示 =====
+async function loadWbgt() {
+  const el = document.getElementById('wbgt-display');
+  if (!el) return;
+  try {
+    const res = await gasGet({action: 'getWbgt'});
+    if (!res || res.error || res.wbgt == null) { el.innerHTML = ''; return; }
+    el.innerHTML = `<span class="wbgt-pill">🌡 WBGT ${res.wbgt}℃ <span class="wbgt-level">（${res.level}）</span></span>`;
+  } catch(e) {
+    el.innerHTML = '';
+  }
 }
 
 // ===== GAS通信 =====

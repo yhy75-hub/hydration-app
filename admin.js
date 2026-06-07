@@ -169,14 +169,38 @@ const Admin = {
   async loadDay() {
     currentDay = document.getElementById('day-picker').value || currentDay;
     this.renderMemberFilter();
-    try {
-      const res = await gasGet({action:'getRecords', date:currentDay});
-      allDayRecords = res.records || [];
-    } catch(e) {
-      console.error(e);
-      allDayRecords = [];
-    }
+    const [recRes] = await Promise.allSettled([
+      gasGet({action:'getRecords', date:currentDay})
+    ]);
+    allDayRecords = recRes.status === 'fulfilled' ? (recRes.value.records || []) : [];
     this.applyDayFilter();
+    this.loadDayWbgt();
+  },
+
+  async loadDayWbgt() {
+    const el = document.getElementById('day-wbgt');
+    if (!el) return;
+    el.innerHTML = '<span style="color:var(--sub);font-size:.8rem">🌡 WBGT 読み込み中...</span>';
+    try {
+      const today = toDateStr(new Date());
+      if (currentDay === today) {
+        const res = await gasGet({action: 'getWbgt'});
+        if (!res.error && res.wbgt != null) {
+          el.innerHTML = `🌡 現在のWBGT: <span style="color:${res.color};font-size:1rem">${res.wbgt}℃（${res.level}）</span> <small style="color:var(--sub);font-weight:400;margin-left:6px">${res.forecastTime} 予測・三国</small>`;
+        } else {
+          el.innerHTML = '<span style="color:var(--sub);font-size:.8rem">🌡 WBGTデータなし</span>';
+        }
+      } else {
+        const res = await gasGet({action: 'getWbgtMax', date: currentDay});
+        if (res.max != null) {
+          el.innerHTML = `🌡 最高WBGT: <span style="color:${res.color};font-size:1rem">${res.max}℃（${res.level}）</span> <small style="color:var(--sub);font-weight:400;margin-left:6px">三国</small>`;
+        } else {
+          el.innerHTML = '<span style="color:var(--sub);font-size:.8rem">🌡 WBGTデータなし（記録期間外）</span>';
+        }
+      }
+    } catch(e) {
+      el.innerHTML = '';
+    }
   },
 
   renderMemberFilter() {

@@ -248,6 +248,25 @@ body {
 }
 .btn-submit:disabled {background:#93c5fd;}
 
+/* ===== WBGTバー ===== */
+.wbgt-row {
+  font-size: .75rem;
+  text-align: right;
+  margin-top: 4px;
+  min-height: 1em;
+  opacity: .95;
+}
+.wbgt-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-weight: 700;
+  background: rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,.35);
+  color: #fff;
+}
+.wbgt-level { font-weight: 400; }
+
 /* ===== トースト ===== */
 .toast {
   position:fixed; bottom:calc(20px + env(safe-area-inset-bottom));
