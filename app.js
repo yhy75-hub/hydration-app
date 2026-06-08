@@ -232,12 +232,12 @@ const App = {
     }
   },
 
-  // 手動更新
-  async refreshRecords() {
+  // 手動更新（記録＋WBGT）
+  async refreshAll() {
     const btn = document.getElementById('btn-refresh');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
-    await loadTodayRecords();
-    if (btn) { btn.disabled = false; btn.textContent = '🔄'; }
+    if (btn) { btn.disabled = true; btn.classList.add('spinning'); }
+    await Promise.all([loadTodayRecords(), loadWbgt()]);
+    if (btn) { btn.disabled = false; btn.classList.remove('spinning'); }
   },
 
   // 休日トグル（個人休）

@@ -73,6 +73,7 @@ body {
 .header-inner {display:flex; justify-content:space-between; align-items:center;}
 .header-title {font-size:1.15rem; font-weight:700; display:flex; align-items:center; gap:6px;}
 .header-icon {font-size:1.3rem;}
+.header-right {display:flex; align-items:center; gap:8px;}
 .header-date {font-size:.8rem; opacity:.85;}
 
 /* ===== タブ ===== */
@@ -106,10 +107,12 @@ body {
 }
 .card-label {font-size:.8rem; font-weight:700; color:var(--text-sub); text-transform:uppercase; letter-spacing:.05em;}
 .card-label-row {display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
-.btn-refresh {background:none; border:none; font-size:1.1rem; cursor:pointer; padding:2px 4px; border-radius:6px; transition:transform .3s;}
+.btn-refresh {background:rgba(255,255,255,.2); border:none; font-size:1rem; cursor:pointer; padding:5px 8px; border-radius:8px; transition:transform .4s, opacity .2s; color:#fff;}
 .btn-refresh:active {transform:rotate(180deg);}
 .btn-refresh:disabled {opacity:.4; cursor:default;}
-.last-updated {font-size:.7rem; color:var(--text-sub); margin-bottom:10px;}
+.btn-refresh.spinning {animation:spin .6s linear infinite;}
+@keyframes spin {to{transform:rotate(360deg)}}
+.last-updated {font-size:.7rem; color:var(--text-sub);}
 
 /* ===== メンバー選択 ===== */
 .member-grid {display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
