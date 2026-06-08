@@ -89,6 +89,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   loadWbgt();
   setInterval(loadWbgt, 20 * 60 * 1000);
 
+  // 今日の記録を5分おきに自動更新
+  setInterval(() => App.refreshRecords(), 5 * 60 * 1000);
+
   // 通知許可を自動リクエスト
   App.requestNotification();
 });
@@ -229,6 +232,14 @@ const App = {
     }
   },
 
+  // 手動更新
+  async refreshRecords() {
+    const btn = document.getElementById('btn-refresh');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+    await loadTodayRecords();
+    if (btn) { btn.disabled = false; btn.textContent = '🔄'; }
+  },
+
   // 休日トグル（個人休）
   async toggleHoliday(checked) {
     if (!state.member) { showToast('⚠️ 先に名前を選んでね'); document.getElementById('holiday-toggle').checked = false; return; }
@@ -243,6 +254,11 @@ async function loadTodayRecords() {
   try {
     const res = await gasGet({ action: 'getRecords', date: state.today });
     renderRecords('today-records', res.records || []);
+    const el = document.getElementById('last-updated');
+    if (el) {
+      const now = new Date();
+      el.textContent = `最終更新: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    }
   } catch (e) {
     document.getElementById('today-records').innerHTML = '<div class="empty-msg">読み込み失敗...</div>';
   }

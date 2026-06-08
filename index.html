@@ -105,7 +105,11 @@
 
       <!-- 今日の記録 -->
       <div class="card">
-        <div class="card-label">今日の記録</div>
+        <div class="card-label-row">
+          <div class="card-label">今日の記録</div>
+          <button class="btn-refresh" id="btn-refresh" onclick="App.refreshRecords()">🔄</button>
+        </div>
+        <div id="last-updated" class="last-updated"></div>
         <div id="today-records" class="record-list">
           <div class="empty-msg">まだ記録がないよ</div>
         </div>

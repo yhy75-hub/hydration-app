@@ -104,7 +104,12 @@ body {
   margin-bottom: 14px;
   box-shadow: var(--shadow);
 }
-.card-label {font-size:.8rem; font-weight:700; color:var(--text-sub); margin-bottom:12px; text-transform:uppercase; letter-spacing:.05em;}
+.card-label {font-size:.8rem; font-weight:700; color:var(--text-sub); text-transform:uppercase; letter-spacing:.05em;}
+.card-label-row {display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
+.btn-refresh {background:none; border:none; font-size:1.1rem; cursor:pointer; padding:2px 4px; border-radius:6px; transition:transform .3s;}
+.btn-refresh:active {transform:rotate(180deg);}
+.btn-refresh:disabled {opacity:.4; cursor:default;}
+.last-updated {font-size:.7rem; color:var(--text-sub); margin-bottom:10px;}
 
 /* ===== メンバー選択 ===== */
 .member-grid {display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
