@@ -15,6 +15,7 @@ let currentWeekStart = getWeekStart(new Date());
 let currentDay = toDateStr(new Date());
 let allWeekRecords = [];
 let holidayDates = [];
+let weekWbgt = {};
 let allDayRecords = [];
 let selectedMember = 'all'; // 日次フィルター
 
@@ -86,12 +87,14 @@ const Admin = {
       `${formatDate(currentWeekStart)} 〜 ${formatDate(endDate)}`;
 
     try {
-      const [recRes, holRes] = await Promise.all([
+      const [recRes, holRes, wbgtRes] = await Promise.all([
         gasGet({action:'getWeekRecords', startDate:startStr, endDate:endStr}),
-        gasGet({action:'getHolidays', startDate:startStr, endDate:endStr})
+        gasGet({action:'getHolidays', startDate:startStr, endDate:endStr}),
+        gasGet({action:'getWbgtWeek', startDate:startStr, endDate:endStr})
       ]);
       allWeekRecords = recRes.records || [];
       holidayDates = holRes.holidays || [];
+      weekWbgt = (wbgtRes.dates) || {};
       this.renderWeekTable(startStr, endStr);
       this.renderSummaryCards();
     } catch (e) {
@@ -109,7 +112,11 @@ const Admin = {
       dates.map(d => {
         const dow = ['日', '月', '火', '水', '木', '金', '土'][new Date(d + 'T00:00:00').getDay()];
         const dowClass = dow === '土' ? 'dow-sat' : dow === '日' ? 'dow-sun' : '';
-        return `<th><div class="date-header">${d.slice(5).replace('-', '/')}</div><div class="dow-header ${dowClass}">${dow}</div></th>`;
+        const w = weekWbgt[d];
+        const wbgtHtml = w
+          ? `<div class="wbgt-week-val" style="color:${w.color}">${w.wbgt}℃</div>`
+          : `<div class="wbgt-week-val wbgt-week-empty">-</div>`;
+        return `<th><div class="date-header">${d.slice(5).replace('-', '/')}</div><div class="dow-header ${dowClass}">${dow}</div>${wbgtHtml}</th>`;
       }).join('');
 
     // データ行

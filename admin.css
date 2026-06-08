@@ -83,6 +83,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sa
 .cell-btn:hover .badge{filter:brightness(.95);}
 .date-header{font-size:.85rem;font-weight:700;}
 .dow-header{font-size:.75rem;opacity:.85;}
+.wbgt-week-val{font-size:.7rem;font-weight:700;margin-top:3px;}
+.wbgt-week-empty{opacity:.35;font-weight:400;}
 .dow-sat{color:#93c5fd;}
 .dow-sun{color:#fca5a5;}
 
