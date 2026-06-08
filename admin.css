@@ -56,6 +56,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sa
 .nav-btn:hover{background:#f1f5f9;}
 .week-label{font-size:1rem;font-weight:700;min-width:180px;text-align:center;}
 .today-btn{padding:8px 16px;border:none;border-radius:8px;background:var(--primary);color:#fff;cursor:pointer;font-size:.85rem;font-weight:600;}
+.csv-btn{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--sub);margin-left:auto;}
+.csv-btn:hover{background:#f1f5f9;color:var(--text);}
 .day-picker{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;}
 
 /* ===== 凡例 ===== */

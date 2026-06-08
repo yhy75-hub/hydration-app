@@ -4,7 +4,7 @@
 
 // ===== 【要変更】設定 =====
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxeueMWOxm-wLt3G6T70Oc6zldEqTTBXBQeqyx5dewwB-2vnXZoJBRHsdT847Tr81hJ/exec'; // app.jsと同じURL
-const ADMIN_PIN = '0000';              // ← 管理者用PINに変更
+const ADMIN_PIN = '1423';
 const MEMBERS = ['山本', '細江', '本城', '林', '四ツ木', '横塚'];
 const CONDITION_EMOJI = { 良好: '😊', 普通: '😐', だるい: '😓', 不調: '🤒', 未選択: '💧' };
 // 体調の優先度（悪い順）
@@ -158,14 +158,41 @@ const Admin = {
       const worst = recs.length > 0
         ? recs.sort((a, b) => COND_RANK[a.condition] - COND_RANK[b.condition])[0].condition
         : null;
+      const rate = dates.length > 0 ? recorded / dates.length : 1;
+      const rateColor = rate >= 0.8 ? 'var(--ok)' : rate >= 0.5 ? 'var(--warn)' : 'var(--danger)';
       return `<div class="summary-card">
         <div class="s-name">${member}</div>
-        <div class="s-count">${recorded}<span style="font-size:.9rem;font-weight:400;color:var(--sub)">/${dates.length}日</span></div>
+        <div class="s-count" style="color:${rateColor}">${recorded}<span style="font-size:.9rem;font-weight:400;color:var(--sub)">/${dates.length}日</span></div>
         <div class="s-label">記録日数</div>
         ${worst ? `<div class="s-cond">最低体調: ${CONDITION_EMOJI[worst]}${worst}</div>` : ''}
       </div>`;
     }).join('');
     document.getElementById('summary-cards').innerHTML = cards;
+  },
+
+  downloadWeekCsv() {
+    const endDate = new Date(currentWeekStart);
+    endDate.setDate(endDate.getDate() + 6);
+    const dates = getDatesInRange(toDateStr(currentWeekStart), toDateStr(endDate));
+    const header = ['メンバー', ...dates];
+    const rows = MEMBERS.map(member => {
+      const cols = dates.map(d => {
+        const dow = new Date(d + 'T00:00:00').getDay();
+        if (dow === 0 || dow === 6 || holidayDates.includes(d)) return '休';
+        const cnt = allWeekRecords.filter(r => r.date === d && r.name === member).length;
+        return cnt > 0 ? cnt : '-';
+      });
+      return [member, ...cols];
+    });
+    const label = toDateStr(currentWeekStart).slice(0,10) + '_' + toDateStr(endDate).slice(0,10);
+    downloadCsv_(`水分補給記録_週次_${label}.csv`, [header, ...rows]);
+  },
+
+  downloadDayCsv() {
+    if (!allDayRecords.length) { alert('記録がないよ'); return; }
+    const header = ['時刻', '名前', '体調', 'コメント'];
+    const rows = allDayRecords.map(r => [r.time || '', r.name, r.condition || '', r.comment || '']);
+    downloadCsv_(`水分補給記録_日次_${currentDay}.csv`, [header, ...rows]);
   },
 
   prevWeek() { currentWeekStart.setDate(currentWeekStart.getDate() - 7); this.loadWeek(); },
@@ -343,6 +370,15 @@ const Admin = {
     }
   }
 };
+
+function downloadCsv_(filename, rows) {
+  const bom = '﻿';
+  const csv = bom + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
+  a.download = filename;
+  a.click();
+}
 
 function wbgtHeaderColor_(level) {
   switch(level) {

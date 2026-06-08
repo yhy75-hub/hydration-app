@@ -67,6 +67,7 @@
         <span id="week-label" class="week-label"></span>
         <button class="nav-btn" onclick="Admin.nextWeek()">▶</button>
         <button class="today-btn" onclick="Admin.goToThisWeek()">今週</button>
+        <button class="csv-btn" onclick="Admin.downloadWeekCsv()">⬇ CSV</button>
       </div>
 
       <div class="legend">
@@ -92,6 +93,7 @@
         <input type="date" id="day-picker" class="day-picker" onchange="Admin.loadDay()">
         <button class="nav-btn" onclick="Admin.nextDay()">▶</button>
         <button class="today-btn" onclick="Admin.goToToday()">今日</button>
+        <button class="csv-btn" onclick="Admin.downloadDayCsv()">⬇ CSV</button>
       </div>
 
       <!-- WBGT表示 -->
