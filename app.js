@@ -305,9 +305,6 @@ async function loadWbgt() {
       if (card) card.innerHTML = '<span class="wbgt-card-loading">データ取得できなかったよ</span>';
       return;
     }
-    if (header) {
-      header.innerHTML = `<span class="wbgt-pill">🌡 WBGT ${res.wbgt}℃ <span class="wbgt-level">（${res.level}）</span></span>`;
-    }
     if (card) {
       card.innerHTML = `
         <div class="wbgt-card-val" style="color:${res.color}">${res.wbgt}℃</div>

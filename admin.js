@@ -114,7 +114,7 @@ const Admin = {
         const dowClass = dow === '土' ? 'dow-sat' : dow === '日' ? 'dow-sun' : '';
         const w = weekWbgt[d];
         const wbgtHtml = w
-          ? `<div class="wbgt-week-val" style="color:${w.color}">${w.wbgt}℃</div>`
+          ? `<div class="wbgt-week-val" style="color:${wbgtHeaderColor_(w.level)}">${w.wbgt}℃</div>`
           : `<div class="wbgt-week-val wbgt-week-empty">-</div>`;
         return `<th><div class="date-header">${d.slice(5).replace('-', '/')}</div><div class="dow-header ${dowClass}">${dow}</div>${wbgtHtml}</th>`;
       }).join('');
@@ -343,6 +343,17 @@ const Admin = {
     }
   }
 };
+
+function wbgtHeaderColor_(level) {
+  switch(level) {
+    case 'ほぼ安全': return '#ffffff';
+    case '注意':     return '#fde047';
+    case '警戒':     return '#fb923c';
+    case '厳重警戒': return '#fca5a5';
+    case '危険':     return '#fca5a5';
+    default:         return '#ffffff';
+  }
+}
 
 // ===== ユーティリティ =====
 async function gasGet(params) {
