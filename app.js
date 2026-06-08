@@ -296,14 +296,29 @@ async function checkHolidayStatus() {
 
 // ===== WBGT表示 =====
 async function loadWbgt() {
-  const el = document.getElementById('wbgt-display');
-  if (!el) return;
   try {
     const res = await gasGet({action: 'getWbgt'});
-    if (!res || res.error || res.wbgt == null) { el.innerHTML = ''; return; }
-    el.innerHTML = `<span class="wbgt-pill">🌡 WBGT ${res.wbgt}℃ <span class="wbgt-level">（${res.level}）</span></span>`;
+    const header = document.getElementById('wbgt-display');
+    const card = document.getElementById('wbgt-card-body');
+    if (!res || res.error || res.wbgt == null) {
+      if (header) header.innerHTML = '';
+      if (card) card.innerHTML = '<span class="wbgt-card-loading">データ取得できなかったよ</span>';
+      return;
+    }
+    if (header) {
+      header.innerHTML = `<span class="wbgt-pill">🌡 WBGT ${res.wbgt}℃ <span class="wbgt-level">（${res.level}）</span></span>`;
+    }
+    if (card) {
+      card.innerHTML = `
+        <div class="wbgt-card-val" style="color:${res.color}">${res.wbgt}℃</div>
+        <div>
+          <div class="wbgt-card-level" style="color:${res.color}">${res.level}</div>
+          <div class="wbgt-card-sub">${res.forecastTime} 予測</div>
+        </div>`;
+    }
   } catch(e) {
-    el.innerHTML = '';
+    const card = document.getElementById('wbgt-card-body');
+    if (card) card.innerHTML = '<span class="wbgt-card-loading">データ取得できなかったよ</span>';
   }
 }
 

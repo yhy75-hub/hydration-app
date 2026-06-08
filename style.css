@@ -248,6 +248,15 @@ body {
 }
 .btn-submit:disabled {background:#93c5fd;}
 
+/* ===== WBGTカード（記録タブ） ===== */
+.wbgt-card { padding: 14px 16px; }
+.wbgt-card-label { font-size: .75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+.wbgt-card-body { display: flex; align-items: center; gap: 12px; }
+.wbgt-card-val { font-size: 2rem; font-weight: 800; line-height: 1; }
+.wbgt-card-level { font-size: .85rem; font-weight: 700; }
+.wbgt-card-sub { font-size: .72rem; color: var(--text-sub); margin-top: 2px; }
+.wbgt-card-loading { font-size: .85rem; color: var(--text-sub); }
+
 /* ===== WBGTバー ===== */
 .wbgt-row {
   font-size: .75rem;
