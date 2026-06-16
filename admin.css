@@ -144,3 +144,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sa
   .main{padding:12px;}
   .summary-card .s-count{font-size:1.4rem;}
 }
+
+/* ===== 部署タグ ===== */
+.dept-tag {
+  display:inline-block; padding:2px 8px; border-radius:100px;
+  background:#e0f2fe; color:#0284c7; font-size:.75rem; font-weight:600;
+  white-space:nowrap;
+}

@@ -61,12 +61,18 @@ const Pin = {
   }
 };
 
-const MEMBERS = ['山本', '細江', '本城', '林', '四ツ木', '横塚'];
+// ===== 【要変更】部署・メンバー設定 =====
+const DEPARTMENTS = [
+  { name: '現場',   members: ['山本', '細江', '本城', '林', '四ツ木', '横塚'] },
+  { name: 'テスト', members: ['テストA', 'テストB', 'テストC'] }
+];
+const MEMBERS = DEPARTMENTS.flatMap(d => d.members);
 const CONDITION_EMOJI = { 良好: '😊', 普通: '😐', だるい: '😓', 不調: '🤒' };
 
 // ===== アプリ状態 =====
 let state = {
   member: localStorage.getItem('member') || '',
+  dept:   localStorage.getItem('dept')   || DEPARTMENTS[0].name,
   condition: '',
   today: toDateStr(new Date())
 };
@@ -75,6 +81,7 @@ let state = {
 window.addEventListener('DOMContentLoaded', async () => {
   Pin.init();
   renderHeader();
+  renderDeptSelector();
   renderMemberGrid();
   initTabs();   // ← 最初に呼ぶ（タブをすぐ触れるように）
   initFirebase();
@@ -108,10 +115,22 @@ function renderHeader() {
   setInterval(update, 1000);
 }
 
+// ===== 部署セレクター =====
+function renderDeptSelector() {
+  const wrap = document.getElementById('dept-selector');
+  if (!wrap) return;
+  if (DEPARTMENTS.length <= 1) { wrap.style.display = 'none'; return; }
+  wrap.innerHTML = DEPARTMENTS.map(d => `
+    <button class="dept-btn ${state.dept === d.name ? 'active' : ''}"
+      onclick="App.selectDept('${d.name}', this)">${d.name}</button>
+  `).join('');
+}
+
 // ===== メンバーグリッド =====
 function renderMemberGrid() {
   const grid = document.getElementById('member-select');
-  grid.innerHTML = MEMBERS.map(name => `
+  const dept = DEPARTMENTS.find(d => d.name === state.dept) || DEPARTMENTS[0];
+  grid.innerHTML = dept.members.map(name => `
     <button class="member-btn ${state.member === name ? 'active' : ''}"
       onclick="App.selectMember('${name}', this)">${name}</button>
   `).join('');
@@ -138,6 +157,17 @@ function initFirebase() {
 
 // ===== App公開API =====
 const App = {
+
+  // 部署選択
+  selectDept(name, el) {
+    state.dept = name;
+    state.member = '';
+    localStorage.setItem('dept', name);
+    localStorage.removeItem('member');
+    document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderMemberGrid();
+  },
 
   // メンバー選択
   selectMember(name, el) {
@@ -181,6 +211,7 @@ const App = {
       date: state.today,
       time: timeStr,
       name: state.member,
+      dept: state.dept,
       condition: state.condition || '未選択',
       comment
     };
@@ -339,14 +370,15 @@ async function loadWbgt() {
 async function gasPost(body) {
   const res = await fetch(CONFIG.GAS_URL, {
     method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(body)
   });
   return res.json();
 }
 
 async function gasGet(params) {
-  const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`${CONFIG.GAS_URL}?${qs}`);
+  const qs = new URLSearchParams({ ...params, _t: Date.now() }).toString();
+  const res = await fetch(`${CONFIG.GAS_URL}?${qs}`, { cache: 'no-store' });
   return res.json();
 }
 

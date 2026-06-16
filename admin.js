@@ -5,7 +5,17 @@
 // ===== 【要変更】設定 =====
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxeueMWOxm-wLt3G6T70Oc6zldEqTTBXBQeqyx5dewwB-2vnXZoJBRHsdT847Tr81hJ/exec'; // app.jsと同じURL
 const ADMIN_PIN = '1423';
-const MEMBERS = ['山本', '細江', '本城', '林', '四ツ木', '横塚'];
+// ===== 【要変更】部署・メンバー設定（app.jsと同じ内容に保つ） =====
+const DEPARTMENTS = [
+  { name: '現場',   members: ['山本', '細江', '本城', '林', '四ツ木', '横塚'] },
+  { name: 'テスト', members: ['テストA', 'テストB', 'テストC'] }
+];
+const MEMBERS = DEPARTMENTS.flatMap(d => d.members);
+
+function getMemberDept(name) {
+  const dept = DEPARTMENTS.find(d => d.members.includes(name));
+  return dept ? dept.name : '';
+}
 const CONDITION_EMOJI = { 良好: '😊', 普通: '😐', だるい: '😓', 不調: '🤒', 未選択: '💧' };
 // 体調の優先度（悪い順）
 const COND_RANK = { 不調: 0, だるい: 1, 普通: 2, 良好: 3, 未選択: 4 };
@@ -190,8 +200,8 @@ const Admin = {
 
   downloadDayCsv() {
     if (!allDayRecords.length) { alert('記録がないよ'); return; }
-    const header = ['時刻', '名前', '体調', 'コメント'];
-    const rows = allDayRecords.map(r => [r.time || '', r.name, r.condition || '', r.comment || '']);
+    const header = ['時刻', '名前', '部署', '体調', 'コメント'];
+    const rows = allDayRecords.map(r => [r.time || '', r.name, r.dept || getMemberDept(r.name), r.condition || '', r.comment || '']);
     downloadCsv_(`水分補給記録_日次_${currentDay}.csv`, [header, ...rows]);
   },
 
@@ -264,13 +274,14 @@ const Admin = {
   renderDayTable(records) {
     const body = document.getElementById('day-body');
     if(!records.length) {
-      body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:24px">記録がないよ</td></tr>';
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">記録がないよ</td></tr>';
       return;
     }
     body.innerHTML = records.map(r => `
       <tr>
         <td>${r.time||''}</td>
         <td><strong>${r.name}</strong></td>
+        <td><span class="dept-tag">${r.dept || getMemberDept(r.name)}</span></td>
         <td><div class="cond-cell">${CONDITION_EMOJI[r.condition]||'💧'} ${r.condition||''}</div></td>
         <td style="color:var(--sub)">${r.comment||'-'}</td>
       </tr>`).join('');
@@ -358,6 +369,7 @@ const Admin = {
         <tr>
           <td>${r.time || ''}</td>
           <td>${r.name}</td>
+          <td><span class="dept-tag">${r.dept || getMemberDept(r.name)}</span></td>
           <td>${CONDITION_EMOJI[r.condition] || '💧'} ${r.condition || ''}</td>
           <td style="color:var(--sub)">${r.comment || '-'}</td>
         </tr>`).join('');
@@ -393,8 +405,8 @@ function wbgtHeaderColor_(level) {
 
 // ===== ユーティリティ =====
 async function gasGet(params) {
-  const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`${GAS_URL}?${qs}`);
+  const qs = new URLSearchParams({ ...params, _t: Date.now() }).toString();
+  const res = await fetch(`${GAS_URL}?${qs}`, { cache: 'no-store' });
   return res.json();
 }
 

@@ -297,3 +297,12 @@ body {
 }
 .toast.hidden {display:none;}
 @keyframes fadeInUp {from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ===== 部署セレクター ===== */
+.dept-selector { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+.dept-btn {
+  padding:6px 16px; border-radius:100px; border:2px solid var(--border);
+  background:#fff; color:var(--sub); font-size:.85rem; font-weight:600; cursor:pointer;
+  transition:all .15s;
+}
+.dept-btn.active { border-color:var(--primary); background:var(--primary); color:#fff; }

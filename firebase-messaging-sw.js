@@ -13,11 +13,15 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// バックグラウンド通知受信
+// バックグラウンド通知受信（webpush.notification付きメッセージはFCMが自動表示するため
+// このハンドラはdata-onlyメッセージのフォールバック用）
 const APP_URL = '/hydration-app/';
 
 messaging.onBackgroundMessage(payload => {
-  const { title, body } = payload.notification;
+  // webpush.notificationがある場合はFCMが既に表示済みのためスキップ
+  if (payload.notification) return;
+  const title = (payload.data && payload.data.title) || '水分補給リマインダー';
+  const body  = (payload.data && payload.data.body)  || 'チェックしてね';
   self.registration.showNotification(title, {
     body,
     icon: '/hydration-app/icons/icon-192.png',
