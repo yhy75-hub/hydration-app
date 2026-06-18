@@ -151,3 +151,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sa
   background:#e0f2fe; color:#0284c7; font-size:.75rem; font-weight:600;
   white-space:nowrap;
 }
+
+/* ===== 管理者部署フィルター ===== */
+.admin-dept-filter {
+  display:flex; gap:8px; padding:10px 16px; flex-wrap:wrap;
+  background:#fff; border-bottom:1px solid var(--border);
+}
+.dept-filter-btn {
+  padding:5px 16px; border-radius:100px; border:2px solid var(--border);
+  background:#fff; color:var(--sub); font-size:.82rem; font-weight:600;
+  cursor:pointer; transition:all .15s;
+}
+.dept-filter-btn.active {
+  border-color:var(--primary); background:var(--primary); color:#fff;
+}

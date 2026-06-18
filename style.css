@@ -298,11 +298,29 @@ body {
 .toast.hidden {display:none;}
 @keyframes fadeInUp {from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
-/* ===== 部署セレクター ===== */
-.dept-selector { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
-.dept-btn {
-  padding:6px 16px; border-radius:100px; border:2px solid var(--border);
-  background:#fff; color:var(--sub); font-size:.85rem; font-weight:600; cursor:pointer;
-  transition:all .15s;
+/* ===== 部署セレクター（プルダウン） ===== */
+.dept-row { display:flex; align-items:center; gap:12px; }
+.dept-select {
+  flex:1; padding:8px 12px; border-radius:8px;
+  border:2px solid var(--border); background:#fff;
+  font-size:.9rem; font-weight:600; color:var(--text);
+  cursor:pointer; outline:none; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center;
+  padding-right:32px;
 }
-.dept-btn.active { border-color:var(--primary); background:var(--primary); color:#fff; }
+.dept-select:focus { border-color:var(--primary); }
+
+/* ===== 塩分ボタン ===== */
+.salt-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.salt-btn {
+  padding:12px 8px; border-radius:12px;
+  border:2px solid var(--border); background:#fff;
+  font-size:1.4rem; line-height:1.4; cursor:pointer;
+  transition:all .15s; text-align:center;
+}
+.salt-btn span { display:block; font-size:.78rem; font-weight:600; color:var(--sub); margin-top:2px; }
+.salt-btn.active {
+  border-color:#06b6d4; background:#ecfeff;
+}
+.salt-btn.active span { color:#0e7490; }

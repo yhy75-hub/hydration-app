@@ -72,10 +72,12 @@
     <!-- 記録タブ -->
     <section id="tab-record" class="tab-content active">
 
-      <!-- 部署選択 -->
+      <!-- 部署・メンバー選択 -->
       <div class="card">
-        <div class="card-label">部署</div>
-        <div id="dept-selector" class="dept-selector"></div>
+        <div class="dept-row">
+          <div class="card-label" style="margin:0">部署</div>
+          <div id="dept-selector"></div>
+        </div>
         <div class="card-label" style="margin-top:12px">あなたの名前</div>
         <div id="member-select" class="member-grid"></div>
       </div>
@@ -165,6 +167,14 @@
           <button class="cond-btn" data-value="普通" onclick="App.selectCondition(this)">😐<br>普通</button>
           <button class="cond-btn" data-value="だるい" onclick="App.selectCondition(this)">😓<br>だるい</button>
           <button class="cond-btn" data-value="不調" onclick="App.selectCondition(this)">🤒<br>不調</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-label">塩分補給は？</div>
+        <div class="salt-grid">
+          <button class="salt-btn active" data-value="なし" onclick="App.selectSalt(this)">💧<br><span>水のみ</span></button>
+          <button class="salt-btn" data-value="あり" onclick="App.selectSalt(this)">🧂<br><span>塩分あり</span></button>
         </div>
       </div>
 

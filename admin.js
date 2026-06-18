@@ -7,8 +7,9 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbxeueMWOxm-wLt3G6T70Oc6
 const ADMIN_PIN = '1423';
 // ===== 【要変更】部署・メンバー設定（app.jsと同じ内容に保つ） =====
 const DEPARTMENTS = [
-  { name: '現場',   members: ['山本', '細江', '本城', '林', '四ツ木', '横塚'] },
-  { name: 'テスト', members: ['テストA', 'テストB', 'テストC'] }
+  { name: '技術チーム', members: ['山本', '細江', '本城', '林', '四ツ木', '横塚'] },
+  { name: '品証T',      members: ['テストA', 'テストB', 'テストC'] },
+  { name: '岩本班',     members: ['岩本A', '岩本B', '岩本C'] }
 ];
 const MEMBERS = DEPARTMENTS.flatMap(d => d.members);
 
@@ -27,7 +28,8 @@ let allWeekRecords = [];
 let holidayDates = [];
 let weekWbgt = {};
 let allDayRecords = [];
-let selectedMember = 'all'; // 日次フィルター
+let selectedMember = 'all';
+let selectedDept = DEPARTMENTS[0].name; // 部署フィルター（デフォルト：最初の部署）
 
 // ===== PIN認証 =====
 const Pin = {
@@ -72,11 +74,34 @@ const Admin = {
 
   init() {
     document.getElementById('day-picker').value = currentDay;
+    this.renderDeptFilter();
     this.loadWeek();
     this.loadDay();
     if(localStorage.getItem('admin_notify_registered') === '1') {
       document.querySelector('.admin-notify-bar').style.display = 'none';
     }
+  },
+
+  renderDeptFilter() {
+    const el = document.getElementById('admin-dept-filter');
+    if (!el) return;
+    el.innerHTML = DEPARTMENTS.map(d => `
+      <button class="dept-filter-btn ${selectedDept === d.name ? 'active' : ''}"
+        onclick="Admin.selectDept('${d.name}')">${d.name}</button>
+    `).join('');
+  },
+
+  selectDept(name) {
+    selectedDept = name;
+    selectedMember = 'all';
+    this.renderDeptFilter();
+    this.renderWeekTable(
+      toDateStr(currentWeekStart),
+      toDateStr(new Date(currentWeekStart.getTime() + 6 * 86400000))
+    );
+    this.renderSummaryCards();
+    this.applyDayFilter();
+    this.renderMemberFilter();
   },
 
   switchTab(tab, btn) {
@@ -129,8 +154,9 @@ const Admin = {
         return `<th><div class="date-header">${d.slice(5).replace('-', '/')}</div><div class="dow-header ${dowClass}">${dow}</div>${wbgtHtml}</th>`;
       }).join('');
 
-    // データ行
-    body.innerHTML = MEMBERS.map(member => {
+    // データ行（選択中の部署メンバーのみ）
+    const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
+    body.innerHTML = deptMembers.map(member => {
       const cells = dates.map(d => {
         const dayRecs = allWeekRecords.filter(r => r.date === d && r.name === member);
         return this._buildCell(d, member, dayRecs);
@@ -162,7 +188,8 @@ const Admin = {
         return dow !== 0 && dow !== 6 && !holidayDates.includes(d);
       });
 
-    const cards = MEMBERS.map(member => {
+    const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
+    const cards = deptMembers.map(member => {
       const recs = allWeekRecords.filter(r => r.name === member);
       const recorded = dates.filter(d => recs.some(r => r.date === d)).length;
       const worst = recs.length > 0
@@ -250,7 +277,8 @@ const Admin = {
   renderMemberFilter() {
     const el = document.getElementById('member-filter');
     if (!el) return;
-    el.innerHTML = ['all', ...MEMBERS].map(m => `
+    const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
+    el.innerHTML = ['all', ...deptMembers].map(m => `
       <button class="filter-btn ${selectedMember===m?'active':''}"
         onclick="Admin.selectMember('${m}')">
         ${m==='all'?'全員':m}
@@ -264,11 +292,13 @@ const Admin = {
   },
 
   applyDayFilter() {
-    const filtered = selectedMember === 'all'
-      ? allDayRecords
-      : allDayRecords.filter(r => r.name === selectedMember);
+    const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
+    let filtered = allDayRecords.filter(r =>
+      deptMembers.includes(r.name) || getMemberDept(r.name) === selectedDept || r.dept === selectedDept
+    );
+    if (selectedMember !== 'all') filtered = filtered.filter(r => r.name === selectedMember);
     this.renderDayTable(filtered);
-    this.renderDaySummary(filtered);
+    this.renderDaySummary(filtered, deptMembers);
   },
 
   renderDayTable(records) {
@@ -287,10 +317,11 @@ const Admin = {
       </tr>`).join('');
   },
 
-  renderDaySummary(records) {
+  renderDaySummary(records, deptMembers) {
     const total = records.length;
     const members = [...new Set(records.map(r => r.name))].length;
-    const targetCount = selectedMember === 'all' ? MEMBERS.length : 1;
+    const dm = deptMembers || (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
+    const targetCount = selectedMember === 'all' ? dm.length : 1;
     const unrecorded = targetCount - members;
     const bad = records.filter(r => r.condition==='不調'||r.condition==='だるい').length;
     document.getElementById('day-summary').innerHTML = `

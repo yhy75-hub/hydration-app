@@ -63,8 +63,9 @@ const Pin = {
 
 // ===== 【要変更】部署・メンバー設定 =====
 const DEPARTMENTS = [
-  { name: '現場',   members: ['山本', '細江', '本城', '林', '四ツ木', '横塚'] },
-  { name: 'テスト', members: ['テストA', 'テストB', 'テストC'] }
+  { name: '技術チーム', members: ['山本', '細江', '本城', '林', '四ツ木', '横塚'] },
+  { name: '品証T',      members: ['テストA', 'テストB', 'テストC'] },
+  { name: '岩本班',     members: ['岩本A', '岩本B', '岩本C'] }
 ];
 const MEMBERS = DEPARTMENTS.flatMap(d => d.members);
 const CONDITION_EMOJI = { 良好: '😊', 普通: '😐', だるい: '😓', 不調: '🤒' };
@@ -74,6 +75,7 @@ let state = {
   member: localStorage.getItem('member') || '',
   dept:   localStorage.getItem('dept')   || DEPARTMENTS[0].name,
   condition: '',
+  salt: 'なし',
   today: toDateStr(new Date())
 };
 
@@ -120,10 +122,9 @@ function renderDeptSelector() {
   const wrap = document.getElementById('dept-selector');
   if (!wrap) return;
   if (DEPARTMENTS.length <= 1) { wrap.style.display = 'none'; return; }
-  wrap.innerHTML = DEPARTMENTS.map(d => `
-    <button class="dept-btn ${state.dept === d.name ? 'active' : ''}"
-      onclick="App.selectDept('${d.name}', this)">${d.name}</button>
-  `).join('');
+  wrap.innerHTML = `<select class="dept-select" onchange="App.selectDept(this.value)">
+    ${DEPARTMENTS.map(d => `<option value="${d.name}" ${state.dept === d.name ? 'selected' : ''}>${d.name}</option>`).join('')}
+  </select>`;
 }
 
 // ===== メンバーグリッド =====
@@ -159,13 +160,11 @@ function initFirebase() {
 const App = {
 
   // 部署選択
-  selectDept(name, el) {
+  selectDept(name) {
     state.dept = name;
     state.member = '';
     localStorage.setItem('dept', name);
     localStorage.removeItem('member');
-    document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
     renderMemberGrid();
   },
 
@@ -181,8 +180,13 @@ const App = {
   openRecordModal() {
     if (!state.member) { showToast('⚠️ 名前を選んでね'); return; }
     state.condition = '';
+    state.salt = 'なし';
     document.getElementById('comment-input').value = '';
     document.querySelectorAll('.cond-btn').forEach(b => b.classList.remove('active'));
+    // 塩分ボタン初期化（水のみをアクティブに）
+    document.querySelectorAll('.salt-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === 'なし');
+    });
     document.getElementById('modal-overlay').classList.remove('hidden');
   },
 
@@ -200,6 +204,13 @@ const App = {
     state.condition = el.dataset.value;
   },
 
+  // 塩分選択
+  selectSalt(el) {
+    document.querySelectorAll('.salt-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    state.salt = el.dataset.value;
+  },
+
   // 記録送信
   async submitRecord() {
     const comment = document.getElementById('comment-input').value.trim();
@@ -213,6 +224,7 @@ const App = {
       name: state.member,
       dept: state.dept,
       condition: state.condition || '未選択',
+      salt: state.salt,
       comment
     };
 
