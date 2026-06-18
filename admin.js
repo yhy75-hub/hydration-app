@@ -8,7 +8,7 @@ const ADMIN_PIN = '1423';
 // ===== 【要変更】部署・メンバー設定（app.jsと同じ内容に保つ） =====
 const DEPARTMENTS = [
   { name: '技術チーム', members: ['山本', '細江', '本城', '林', '四ツ木', '横塚'] },
-  { name: '品証T',      members: ['テストA', 'テストB', 'テストC'] },
+  { name: '品証T',      members: ['堀江', '吉村', '南', '東木谷'] },
   { name: '岩本班',     members: ['岩本A', '岩本B', '岩本C'] }
 ];
 const MEMBERS = DEPARTMENTS.flatMap(d => d.members);
