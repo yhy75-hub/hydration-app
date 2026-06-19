@@ -215,11 +215,12 @@ const App = {
   async submitRecord() {
     const comment = document.getElementById('comment-input').value.trim();
     const now = new Date();
+    const today = toDateStr(now); // 送信時点の日付を毎回取得（page load時の固定値を使わない）
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     const body = {
       action: 'record',
-      date: state.today,
+      date: today,
       time: timeStr,
       name: state.member,
       dept: state.dept,
@@ -287,7 +288,7 @@ const App = {
   async toggleHoliday(checked) {
     if (!state.member) { showToast('⚠️ 先に名前を選んでね'); document.getElementById('holiday-toggle').checked = false; return; }
     const action = checked ? 'setHoliday' : 'removeHoliday';
-    await gasPost({ action, date: state.today, name: state.member });
+    await gasPost({ action, date: toDateStr(new Date()), name: state.member });
     showToast(checked ? '🏖 今日は休みに設定したよ' : '🔔 今日の休み設定を解除したよ');
   }
 };
@@ -295,7 +296,7 @@ const App = {
 // ===== 今日の記録を取得 =====
 async function loadTodayRecords() {
   try {
-    const res = await gasGet({ action: 'getRecords', date: state.today });
+    const res = await gasGet({ action: 'getRecords', date: toDateStr(new Date()) });
     renderRecords('today-records', res.records || []);
     const el = document.getElementById('last-updated');
     if (el) {
@@ -341,7 +342,7 @@ async function checkHolidayStatus() {
   const toggle = document.getElementById('holiday-toggle');
   const hint = document.getElementById('holiday-hint');
   try {
-    const res = await gasGet({action:'isHoliday', date:state.today, name: state.member || ''});
+    const res = await gasGet({action:'isHoliday', date:toDateStr(new Date()), name: state.member || ''});
     toggle.checked = res.isHoliday;
     if(res.isHoliday && res.reason !== '個人休') {
       toggle.disabled = true;
