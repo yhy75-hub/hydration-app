@@ -324,3 +324,18 @@ body {
   border-color:#06b6d4; background:#ecfeff;
 }
 .salt-btn.active span { color:#0e7490; }
+
+/* ===== チーム別記録セクション ===== */
+.dept-section { margin-bottom:8px; }
+.dept-section-header {
+  display:flex; align-items:center; gap:8px;
+  font-size:.78rem; font-weight:700; color:var(--primary);
+  padding:6px 4px 4px;
+  border-bottom:1px solid #e0f2fe;
+  margin-bottom:4px;
+}
+.dept-count {
+  font-size:.72rem; font-weight:500; color:var(--sub);
+  background:var(--border); border-radius:100px;
+  padding:1px 7px;
+}

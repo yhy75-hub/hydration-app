@@ -112,11 +112,11 @@ function renderHeader() {
   const update = () => {
     const d = new Date();
     const date = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}（${['日', '月', '火', '水', '木', '金', '土'][d.getDay()]}）`;
-    const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     document.getElementById('date-display').textContent = `${date}　${time}`;
   };
   update();
-  setInterval(update, 1000);
+  setInterval(update, 60000);
 }
 
 // ===== 部署セレクター =====
@@ -168,6 +168,7 @@ const App = {
     localStorage.setItem('dept', name);
     localStorage.removeItem('member');
     renderMemberGrid();
+    loadTodayRecords();
   },
 
   // メンバー選択
@@ -299,7 +300,10 @@ const App = {
 async function loadTodayRecords() {
   try {
     const res = await gasGet({ action: 'getRecords', date: toDateStr(new Date()) });
-    renderRecords('today-records', res.records || []);
+    const deptRecords = (res.records || []).filter(r =>
+      (r.dept || getMemberDept(r.name)) === state.dept
+    );
+    renderRecords('today-records', deptRecords);
     const el = document.getElementById('last-updated');
     if (el) {
       const now = new Date();
@@ -320,14 +324,52 @@ async function loadHistoryRecords(date) {
   }
 }
 
-// ===== 記録レンダリング =====
-function renderRecords(elId, records) {
+// ===== 部署取得ヘルパー =====
+function getMemberDept(name) {
+  const dept = DEPARTMENTS.find(d => d.members.includes(name));
+  return dept ? dept.name : '';
+}
+
+// ===== 記録レンダリング（チーム別） =====
+function renderRecords(elId, records, groupByDept = false) {
   const el = document.getElementById(elId);
   if (!records.length) {
     el.innerHTML = '<div class="empty-msg">記録がないよ</div>';
     return;
   }
-  el.innerHTML = [...records].reverse().map(r => `
+
+  if (!groupByDept) {
+    el.innerHTML = [...records].reverse().map(r => recordItemHtml(r)).join('');
+    return;
+  }
+
+  // チーム別にグループ化（DEPARTMENTSの順）
+  const groups = DEPARTMENTS.map(d => ({
+    name: d.name,
+    records: records.filter(r => (r.dept || getMemberDept(r.name)) === d.name)
+  })).filter(g => g.records.length > 0);
+
+  // どのチームにも属さない記録（旧データなど）
+  const ungrouped = records.filter(r => {
+    const dept = r.dept || getMemberDept(r.name);
+    return !dept;
+  });
+
+  el.innerHTML = groups.map(g => `
+    <div class="dept-section">
+      <div class="dept-section-header">${g.name} <span class="dept-count">${g.records.length}件</span></div>
+      ${[...g.records].reverse().map(r => recordItemHtml(r)).join('')}
+    </div>
+  `).join('') + (ungrouped.length ? `
+    <div class="dept-section">
+      <div class="dept-section-header">その他</div>
+      ${[...ungrouped].reverse().map(r => recordItemHtml(r)).join('')}
+    </div>
+  ` : '');
+}
+
+function recordItemHtml(r) {
+  return `
     <div class="record-item">
       <span class="record-time">${r.time}</span>
       <span class="record-condition">${CONDITION_EMOJI[r.condition] || '💧'}</span>
@@ -335,8 +377,7 @@ function renderRecords(elId, records) {
         <div class="record-name">${r.name} <small style="color:var(--text-sub);font-weight:400">${r.condition}</small></div>
         ${r.comment ? `<div class="record-comment">${r.comment}</div>` : ''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
 }
 
 // ===== 休日状態を確認 =====
