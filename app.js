@@ -177,6 +177,7 @@ const App = {
     localStorage.setItem('member', name);
     document.querySelectorAll('.member-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
+    App.requestNotification();
   },
 
   // 記録モーダルを開く
