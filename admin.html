@@ -50,6 +50,7 @@
   <nav class="tab-nav">
     <button class="tab-btn active" onclick="Admin.switchTab('week', this)">週次ビュー</button>
     <button class="tab-btn" onclick="Admin.switchTab('day', this)">日次ビュー</button>
+    <button class="tab-btn" onclick="Admin.switchTab('trend', this)">📈 トレンド</button>
   </nav>
 
   <!-- 部署フィルター -->
@@ -117,6 +118,21 @@
           <tbody id="day-body"></tbody>
         </table>
       </div>
+    </section>
+
+    <!-- ===== トレンドビュー ===== -->
+    <section id="tab-trend" class="tab-content hidden">
+      <div class="trend-header">
+        <span id="trend-week-label" class="week-label"></span>
+        <div style="display:flex;gap:6px">
+          <button class="nav-btn" onclick="Admin.prevWeek()">◀</button>
+          <button class="nav-btn" onclick="Admin.nextWeek()">▶</button>
+          <button class="today-btn" onclick="Admin.goToThisWeek()">今週</button>
+        </div>
+      </div>
+      <div id="trend-chart" class="trend-chart"></div>
+      <div id="trend-legend" class="trend-legend"></div>
+      <div id="trend-summary" class="trend-summary"></div>
     </section>
 
   </main>

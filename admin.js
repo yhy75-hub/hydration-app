@@ -111,6 +111,7 @@ const Admin = {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
     btn.classList.add('active');
     document.getElementById('tab-' + tab).classList.remove('hidden');
+    if (tab === 'trend') this.renderTrendChart();
   },
 
   // ===== 週次 =====
@@ -134,6 +135,7 @@ const Admin = {
       weekWbgt = (wbgtRes.dates) || {};
       this.renderWeekTable(startStr, endStr);
       this.renderSummaryCards();
+      if (!document.getElementById('tab-trend').classList.contains('hidden')) this.renderTrendChart();
     } catch (e) {
       console.error(e);
     }
@@ -237,6 +239,7 @@ const Admin = {
   prevWeek() { currentWeekStart.setDate(currentWeekStart.getDate() - 7); this.loadWeek(); },
   nextWeek() { currentWeekStart.setDate(currentWeekStart.getDate() + 7); this.loadWeek(); },
   goToThisWeek() { currentWeekStart = getWeekStart(new Date()); this.loadWeek(); },
+
 
   // ===== 日次 =====
   async loadDay() {
@@ -388,6 +391,106 @@ const Admin = {
     } catch(e) {
       statusEl.textContent = '❌ エラー: ' + e.message;
     }
+  },
+
+  // ===== トレンドグラフ =====
+  renderTrendChart() {
+    const endDate = new Date(currentWeekStart);
+    endDate.setDate(endDate.getDate() + 6);
+    const startStr = toDateStr(currentWeekStart);
+    const endStr = toDateStr(endDate);
+    const dates = getDatesInRange(startStr, endStr);
+    const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
+
+    document.getElementById('trend-week-label').textContent =
+      `${formatDate(currentWeekStart)} 〜 ${formatDate(endDate)}`;
+
+    const COLORS = { '良好': '#22c55e', '普通': '#60a5fa', 'だるい': '#fb923c', '不調': '#ef4444' };
+    const CONDITIONS = ['不調', 'だるい', '普通', '良好'];
+    const DOW = ['日', '月', '火', '水', '木', '金', '土'];
+
+    const dayData = dates.map(d => {
+      const recs = allWeekRecords.filter(r => r.date === d && deptMembers.includes(r.name));
+      const dow = new Date(d + 'T00:00:00').getDay();
+      const isOff = dow === 0 || dow === 6 || holidayDates.includes(d);
+      const counts = { '良好': 0, '普通': 0, 'だるい': 0, '不調': 0 };
+      recs.forEach(r => { if (counts[r.condition] !== undefined) counts[r.condition]++; });
+      return { d, dow, isOff, counts, total: recs.length };
+    });
+
+    const W = 700, H = 280;
+    const PAD = { top: 24, right: 20, bottom: 56, left: 36 };
+    const chartW = W - PAD.left - PAD.right;
+    const chartH = H - PAD.top - PAD.bottom;
+    const maxCount = Math.max(...dayData.map(d => d.total), 4);
+    const gap = chartW / dates.length;
+    const barW = gap * 0.6;
+
+    // グリッド線
+    let grid = '';
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const y = PAD.top + (chartH / steps) * i;
+      const val = Math.round(maxCount * (steps - i) / steps);
+      grid += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="#1e293b" stroke-width="1"/>`;
+      grid += `<text x="${PAD.left - 5}" y="${y + 4}" text-anchor="end" font-size="10" fill="#64748b">${val}</text>`;
+    }
+
+    // 棒グラフ
+    let bars = '';
+    dayData.forEach((day, i) => {
+      const cx = PAD.left + i * gap + gap / 2;
+      const bx = cx - barW / 2;
+      const dowColor = day.dow === 0 ? '#f87171' : day.dow === 6 ? '#60a5fa' : '#94a3b8';
+
+      if (day.isOff) {
+        bars += `<rect x="${bx}" y="${PAD.top}" width="${barW}" height="${chartH}" fill="#1e293b" rx="3" opacity="0.5"/>`;
+        bars += `<text x="${cx}" y="${PAD.top + chartH / 2 + 4}" text-anchor="middle" font-size="10" fill="#475569">休</text>`;
+      } else {
+        let yOff = PAD.top + chartH;
+        CONDITIONS.forEach(cond => {
+          const cnt = day.counts[cond];
+          if (!cnt) return;
+          const h = (cnt / maxCount) * chartH;
+          yOff -= h;
+          bars += `<rect x="${bx}" y="${yOff}" width="${barW}" height="${h}" fill="${COLORS[cond]}" rx="2"/>`;
+          if (h > 16) bars += `<text x="${cx}" y="${yOff + h / 2 + 4}" text-anchor="middle" font-size="10" fill="white" font-weight="bold">${cnt}</text>`;
+        });
+        if (day.total === 0) {
+          bars += `<rect x="${bx}" y="${PAD.top + chartH - 3}" width="${barW}" height="3" fill="#334155" rx="1"/>`;
+        }
+        if (day.total > 0) {
+          bars += `<text x="${cx}" y="${PAD.top + chartH - dayData.reduce((mx,d)=>Math.max(mx,d.total),0)/maxCount*chartH - 6}" text-anchor="middle" font-size="10" fill="#94a3b8">${day.total}</text>`;
+        }
+      }
+
+      // X軸ラベル
+      const dateLabel = day.d.slice(5).replace('-', '/');
+      bars += `<text x="${cx}" y="${H - 30}" text-anchor="middle" font-size="10" fill="#64748b">${dateLabel}</text>`;
+      bars += `<text x="${cx}" y="${H - 14}" text-anchor="middle" font-size="12" fill="${dowColor}" font-weight="bold">${DOW[day.dow]}</text>`;
+    });
+
+    const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+      ${grid}${bars}
+    </svg>`;
+    document.getElementById('trend-chart').innerHTML = svg;
+
+    // 凡例
+    document.getElementById('trend-legend').innerHTML =
+      [...CONDITIONS].reverse().map(c =>
+        `<span class="trend-leg-item"><span style="background:${COLORS[c]}" class="trend-leg-dot"></span>${c}</span>`
+      ).join('');
+
+    // サマリー（週計）
+    const workDays = dayData.filter(d => !d.isOff);
+    const totalRecs = dayData.reduce((s, d) => s + d.total, 0);
+    const badRecs = dayData.reduce((s, d) => s + d.counts['不調'] + d.counts['だるい'], 0);
+    const recordedDays = workDays.filter(d => d.total > 0).length;
+    document.getElementById('trend-summary').innerHTML = `
+      <div class="day-stat"><div class="ds-num">${totalRecs}</div><div class="ds-label">週間記録件数</div></div>
+      <div class="day-stat"><div class="ds-num">${recordedDays}<span style="font-size:.85rem;color:var(--sub)">/${workDays.length}日</span></div><div class="ds-label">記録のあった日</div></div>
+      <div class="day-stat"><div class="ds-num" style="color:${badRecs > 0 ? 'var(--warn)' : 'var(--ok)'}">${badRecs}</div><div class="ds-label">体調不良件数</div></div>
+    `;
   },
 
   // ===== 詳細モーダル =====
