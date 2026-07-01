@@ -1,24 +1,20 @@
-// ===== 【要変更】FirebaseプロジェクトのAPIキーに変更 =====
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: 'AIzaSyAX1QmJoIVN67GKMoXV1oIbNmV1bk-E2aM',
-  authDomain: 'hydration-850bd.firebaseapp.com',
-  projectId: 'hydration-850bd',
-  storageBucket: 'hydration-850bd.firebasestorage.app',
-  messagingSenderId: '385339912693',
-  appId: '1:385339912693:web:4db23ab0e1e6f8c35630bc'
+  apiKey: 'AIzaSyD2rPXVNfX-Rr4ggmjds9pLm2aWk8A52zg',
+  authDomain: 'hydration-v2.firebaseapp.com',
+  projectId: 'hydration-v2',
+  storageBucket: 'hydration-v2.firebasestorage.app',
+  messagingSenderId: '347969374865',
+  appId: '1:347969374865:web:b7e47a8ecd0a2de1d8cd30'
 });
 
 const messaging = firebase.messaging();
 
-// バックグラウンド通知受信（webpush.notification付きメッセージはFCMが自動表示するため
-// このハンドラはdata-onlyメッセージのフォールバック用）
 const APP_URL = '/hydration-app/';
 
 messaging.onBackgroundMessage(payload => {
-  // webpush.notificationがある場合はFCMが既に表示済みのためスキップ
   if (payload.notification) return;
   const title = (payload.data && payload.data.title) || '水分補給リマインダー';
   const body  = (payload.data && payload.data.body)  || 'チェックしてね';
@@ -32,7 +28,6 @@ messaging.onBackgroundMessage(payload => {
   });
 });
 
-// 通知タップで画面を開く
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const targetUrl = (e.notification.data && e.notification.data.url) || APP_URL;

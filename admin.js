@@ -1,11 +1,17 @@
-// ============================================================
-// 管理者ダッシュボード
-// ============================================================
-
 // ===== 【要変更】設定 =====
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxeueMWOxm-wLt3G6T70Oc6zldEqTTBXBQeqyx5dewwB-2vnXZoJBRHsdT847Tr81hJ/exec'; // app.jsと同じURL
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw9AbSNrKe6Uox6yWZd883UTT3NiybtiqkcgHbtBve0ksD3QvELgilX12jxkZQH2Oq4/exec';
 const ADMIN_PIN = '1423';
-// ===== 【要変更】部署・メンバー設定（app.jsと同じ内容に保つ） =====
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyD2rPXVNfX-Rr4ggmjds9pLm2aWk8A52zg',
+  authDomain: 'hydration-v2.firebaseapp.com',
+  projectId: 'hydration-v2',
+  storageBucket: 'hydration-v2.firebasestorage.app',
+  messagingSenderId: '347969374865',
+  appId: '1:347969374865:web:b7e47a8ecd0a2de1d8cd30'
+};
+const VAPID_KEY = 'BF3hSqNizcMk5kYnP7-c-nneSnNIh8cCMQdCp-kV0UP6AmsbWSd7OB06YQ3yC23Ds86ykT-CNm94UIgEYCxMHEw';
+
+// ===== 【要変更】部署・メンバー設定 =====
 const DEPARTMENTS = [
   { name: '管理者',       members: ['伊藤', '有側'] },
   { name: '品質保証チーム', members: ['堀江', '吉村', '南', '東木谷'] },
@@ -16,12 +22,16 @@ const DEPARTMENTS = [
 const MEMBERS = DEPARTMENTS.flatMap(d => d.members);
 
 function getMemberDept(name) {
-  const dept = DEPARTMENTS.find(d => d.members.includes(name));
-  return dept ? dept.name : '';
+  return DEPARTMENTS.find(d => d.members.includes(name))?.name || '';
 }
+
 const CONDITION_EMOJI = { 良好: '😊', 普通: '😐', だるい: '😓', 不調: '🤒', 未選択: '💧' };
-// 体調の優先度（悪い順）
 const COND_RANK = { 不調: 0, だるい: 1, 普通: 2, 良好: 3, 未選択: 4 };
+
+// ===== Firebase 初期化 =====
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+const recordsCol = db.collection('records');
 
 // ===== 状態 =====
 let currentWeekStart = getWeekStart(new Date());
@@ -31,7 +41,7 @@ let holidayDates = [];
 let weekWbgt = {};
 let allDayRecords = [];
 let selectedMember = 'all';
-let selectedDept = DEPARTMENTS[0].name; // 部署フィルター（デフォルト：最初の部署）
+let selectedDept = DEPARTMENTS[0].name;
 
 // ===== PIN認証 =====
 const Pin = {
@@ -79,7 +89,7 @@ const Admin = {
     this.renderDeptFilter();
     this.loadWeek();
     this.loadDay();
-    if(localStorage.getItem('admin_notify_registered') === '1') {
+    if (localStorage.getItem('admin_notify_registered') === '1') {
       document.querySelector('.admin-notify-bar').style.display = 'none';
     }
   },
@@ -97,21 +107,20 @@ const Admin = {
     selectedDept = name;
     selectedMember = 'all';
     this.renderDeptFilter();
-    this.renderWeekTable(
-      toDateStr(currentWeekStart),
-      toDateStr(new Date(currentWeekStart.getTime() + 6 * 86400000))
-    );
+    this.renderWeekTable(toDateStr(currentWeekStart), toDateStr(new Date(currentWeekStart.getTime() + 6 * 86400000)));
     this.renderSummaryCards();
     this.applyDayFilter();
     this.renderMemberFilter();
+    if (!document.getElementById('tab-trend').classList.contains('hidden')) this.renderTrendChart();
   },
 
   switchTab(tab, btn) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('tab-' + tab).classList.remove('hidden');
+    document.getElementById('tab-' + tab).classList.add('active');
     if (tab === 'trend') this.renderTrendChart();
+    if (tab === 'holidays') this.loadHolidays();
   },
 
   // ===== 週次 =====
@@ -125,14 +134,21 @@ const Admin = {
       `${formatDate(currentWeekStart)} 〜 ${formatDate(endDate)}`;
 
     try {
-      const [recRes, holRes, wbgtRes] = await Promise.all([
-        gasGet({action:'getWeekRecords', startDate:startStr, endDate:endStr}),
-        gasGet({action:'getHolidays', startDate:startStr, endDate:endStr}),
-        gasGet({action:'getWbgtWeek', startDate:startStr, endDate:endStr})
+      // Firestore から週次記録取得
+      const snap = await recordsCol
+        .where('date', '>=', startStr)
+        .where('date', '<=', endStr)
+        .get();
+      allWeekRecords = snap.docs.map(d => d.data()).sort((a, b) => a.date.localeCompare(b.date));
+
+      // 休日・WBGT は GAS から取得（変更なし）
+      const [holRes, wbgtRes] = await Promise.all([
+        gasGet({ action: 'getHolidays', startDate: startStr, endDate: endStr }),
+        gasGet({ action: 'getWbgtWeek', startDate: startStr, endDate: endStr })
       ]);
-      allWeekRecords = recRes.records || [];
       holidayDates = holRes.holidays || [];
-      weekWbgt = (wbgtRes.dates) || {};
+      weekWbgt = wbgtRes.dates || {};
+
       this.renderWeekTable(startStr, endStr);
       this.renderSummaryCards();
       if (!document.getElementById('tab-trend').classList.contains('hidden')) this.renderTrendChart();
@@ -146,7 +162,6 @@ const Admin = {
     const header = document.getElementById('week-header');
     const body = document.getElementById('week-body');
 
-    // ヘッダー行
     header.innerHTML = `<th class="col-name">メンバー</th>` +
       dates.map(d => {
         const dow = ['日', '月', '火', '水', '木', '金', '土'][new Date(d + 'T00:00:00').getDay()];
@@ -158,7 +173,6 @@ const Admin = {
         return `<th><div class="date-header">${d.slice(5).replace('-', '/')}</div><div class="dow-header ${dowClass}">${dow}</div>${wbgtHtml}</th>`;
       }).join('');
 
-    // データ行（選択中の部署メンバーのみ）
     const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
     body.innerHTML = deptMembers.map(member => {
       const cells = dates.map(d => {
@@ -171,34 +185,25 @@ const Admin = {
 
   _buildCell(date, name, recs) {
     const dow = new Date(date + 'T00:00:00').getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    const isHoliday = holidayDates.includes(date);
-    if (isWeekend || isHoliday) return `<td><span class="badge badge-off">休</span></td>`;
-    if (recs.length === 0) return `<td><button class="cell-btn" onclick="Admin.showDetail('${date}','${name}')"><span class="badge badge-none">-</span></button></td>`;
-
-    // 最悪の体調を表示
+    if (dow === 0 || dow === 6 || holidayDates.includes(date))
+      return `<td><span class="badge badge-off">休</span></td>`;
+    if (!recs.length)
+      return `<td><button class="cell-btn" onclick="Admin.showDetail('${date}','${name}')"><span class="badge badge-none">-</span></button></td>`;
     const worst = recs.sort((a, b) => COND_RANK[a.condition] - COND_RANK[b.condition])[0];
     const condClass = { 不調: 'badge-danger', だるい: 'badge-warn', 普通: 'badge-ok', 良好: 'badge-ok', 未選択: 'badge-ok' }[worst.condition] || 'badge-ok';
-    const emoji = CONDITION_EMOJI[worst.condition] || '💧';
-    return `<td><button class="cell-btn" onclick="Admin.showDetail('${date}','${name}')"><span class="badge ${condClass}">${recs.length} ${emoji}</span></button></td>`;
+    return `<td><button class="cell-btn" onclick="Admin.showDetail('${date}','${name}')"><span class="badge ${condClass}">${recs.length} ${CONDITION_EMOJI[worst.condition]||'💧'}</span></button></td>`;
   },
 
   renderSummaryCards() {
     const endDate = new Date(currentWeekStart);
     endDate.setDate(endDate.getDate() + 6);
     const dates = getDatesInRange(toDateStr(currentWeekStart), toDateStr(endDate))
-      .filter(d => {
-        const dow = new Date(d + 'T00:00:00').getDay();
-        return dow !== 0 && dow !== 6 && !holidayDates.includes(d);
-      });
-
+      .filter(d => { const dow = new Date(d + 'T00:00:00').getDay(); return dow !== 0 && dow !== 6 && !holidayDates.includes(d); });
     const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
-    const cards = deptMembers.map(member => {
+    document.getElementById('summary-cards').innerHTML = deptMembers.map(member => {
       const recs = allWeekRecords.filter(r => r.name === member);
       const recorded = dates.filter(d => recs.some(r => r.date === d)).length;
-      const worst = recs.length > 0
-        ? recs.sort((a, b) => COND_RANK[a.condition] - COND_RANK[b.condition])[0].condition
-        : null;
+      const worst = recs.length > 0 ? recs.sort((a, b) => COND_RANK[a.condition] - COND_RANK[b.condition])[0].condition : null;
       const rate = dates.length > 0 ? recorded / dates.length : 1;
       const rateColor = rate >= 0.8 ? 'var(--ok)' : rate >= 0.5 ? 'var(--warn)' : 'var(--danger)';
       return `<div class="summary-card">
@@ -208,7 +213,6 @@ const Admin = {
         ${worst ? `<div class="s-cond">最低体調: ${CONDITION_EMOJI[worst]}${worst}</div>` : ''}
       </div>`;
     }).join('');
-    document.getElementById('summary-cards').innerHTML = cards;
   },
 
   downloadWeekCsv() {
@@ -220,35 +224,27 @@ const Admin = {
       const cols = dates.map(d => {
         const dow = new Date(d + 'T00:00:00').getDay();
         if (dow === 0 || dow === 6 || holidayDates.includes(d)) return '休';
-        const cnt = allWeekRecords.filter(r => r.date === d && r.name === member).length;
-        return cnt > 0 ? cnt : '-';
+        return allWeekRecords.filter(r => r.date === d && r.name === member).length || '-';
       });
       return [member, ...cols];
     });
-    const label = toDateStr(currentWeekStart).slice(0,10) + '_' + toDateStr(endDate).slice(0,10);
-    downloadCsv_(`水分補給記録_週次_${label}.csv`, [header, ...rows]);
-  },
-
-  downloadDayCsv() {
-    if (!allDayRecords.length) { alert('記録がないよ'); return; }
-    const header = ['時刻', '名前', '部署', '体調', 'コメント'];
-    const rows = allDayRecords.map(r => [r.time || '', r.name, r.dept || getMemberDept(r.name), r.condition || '', r.comment || '']);
-    downloadCsv_(`水分補給記録_日次_${currentDay}.csv`, [header, ...rows]);
+    downloadCsv_(`水分補給記録_週次_${toDateStr(currentWeekStart)}_${toDateStr(new Date(currentWeekStart.getTime()+6*86400000))}.csv`, [header, ...rows]);
   },
 
   prevWeek() { currentWeekStart.setDate(currentWeekStart.getDate() - 7); this.loadWeek(); },
   nextWeek() { currentWeekStart.setDate(currentWeekStart.getDate() + 7); this.loadWeek(); },
   goToThisWeek() { currentWeekStart = getWeekStart(new Date()); this.loadWeek(); },
 
-
   // ===== 日次 =====
   async loadDay() {
     currentDay = document.getElementById('day-picker').value || currentDay;
     this.renderMemberFilter();
-    const [recRes] = await Promise.allSettled([
-      gasGet({action:'getRecords', date:currentDay})
-    ]);
-    allDayRecords = recRes.status === 'fulfilled' ? (recRes.value.records || []) : [];
+
+    const snap = await recordsCol
+      .where('date', '==', currentDay)
+      .get();
+    allDayRecords = snap.docs.map(d => d.data()).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
     this.applyDayFilter();
     this.loadDayWbgt();
   },
@@ -259,24 +255,17 @@ const Admin = {
     el.innerHTML = '<span style="color:var(--sub);font-size:.8rem">🌡 WBGT 読み込み中...</span>';
     try {
       const today = toDateStr(new Date());
-      if (currentDay === today) {
-        const res = await gasGet({action: 'getWbgt'});
-        if (!res.error && res.wbgt != null) {
-          el.innerHTML = `🌡 現在のWBGT: <span style="color:${res.color};font-size:1rem">${res.wbgt}℃（${res.level}）</span> <small style="color:var(--sub);font-weight:400;margin-left:6px">${res.forecastTime} 予測・三国</small>`;
-        } else {
-          el.innerHTML = '<span style="color:var(--sub);font-size:.8rem">🌡 WBGTデータなし</span>';
-        }
+      const res = currentDay === today
+        ? await gasGet({ action: 'getWbgt' })
+        : await gasGet({ action: 'getWbgtMax', date: currentDay });
+      if (res.wbgt != null || res.max != null) {
+        const val = res.wbgt ?? res.max;
+        const label = currentDay === today ? '現在のWBGT' : '最高WBGT';
+        el.innerHTML = `🌡 ${label}: <span style="color:${res.color};font-size:1rem">${val}℃（${res.level}）</span>`;
       } else {
-        const res = await gasGet({action: 'getWbgtMax', date: currentDay});
-        if (res.max != null) {
-          el.innerHTML = `🌡 最高WBGT: <span style="color:${res.color};font-size:1rem">${res.max}℃（${res.level}）</span> <small style="color:var(--sub);font-weight:400;margin-left:6px">三国</small>`;
-        } else {
-          el.innerHTML = '<span style="color:var(--sub);font-size:.8rem">🌡 WBGTデータなし（記録期間外）</span>';
-        }
+        el.innerHTML = '<span style="color:var(--sub);font-size:.8rem">🌡 WBGTデータなし</span>';
       }
-    } catch(e) {
-      el.innerHTML = '';
-    }
+    } catch (e) { el.innerHTML = ''; }
   },
 
   renderMemberFilter() {
@@ -284,9 +273,8 @@ const Admin = {
     if (!el) return;
     const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
     el.innerHTML = ['all', ...deptMembers].map(m => `
-      <button class="filter-btn ${selectedMember===m?'active':''}"
-        onclick="Admin.selectMember('${m}')">
-        ${m==='all'?'全員':m}
+      <button class="filter-btn ${selectedMember === m ? 'active' : ''}" onclick="Admin.selectMember('${m}')">
+        ${m === 'all' ? '全員' : m}
       </button>`).join('');
   },
 
@@ -298,9 +286,7 @@ const Admin = {
 
   applyDayFilter() {
     const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
-    let filtered = allDayRecords.filter(r =>
-      deptMembers.includes(r.name) || getMemberDept(r.name) === selectedDept || r.dept === selectedDept
-    );
+    let filtered = allDayRecords.filter(r => deptMembers.includes(r.name) || getMemberDept(r.name) === selectedDept);
     if (selectedMember !== 'all') filtered = filtered.filter(r => r.name === selectedMember);
     this.renderDayTable(filtered);
     this.renderDaySummary(filtered, deptMembers);
@@ -308,32 +294,38 @@ const Admin = {
 
   renderDayTable(records) {
     const body = document.getElementById('day-body');
-    if(!records.length) {
+    if (!records.length) {
       body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">記録がないよ</td></tr>';
       return;
     }
     body.innerHTML = records.map(r => `
       <tr>
-        <td>${r.time||''}</td>
+        <td>${r.time || ''}</td>
         <td><strong>${r.name}</strong></td>
         <td><span class="dept-tag">${r.dept || getMemberDept(r.name)}</span></td>
-        <td><div class="cond-cell">${CONDITION_EMOJI[r.condition]||'💧'} ${r.condition||''}</div></td>
-        <td style="color:var(--sub)">${r.comment||'-'}</td>
+        <td><div class="cond-cell">${CONDITION_EMOJI[r.condition] || '💧'} ${r.condition || ''}</div></td>
+        <td style="color:var(--sub)">${r.comment || '-'}</td>
       </tr>`).join('');
   },
 
   renderDaySummary(records, deptMembers) {
     const total = records.length;
     const members = [...new Set(records.map(r => r.name))].length;
-    const dm = deptMembers || (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
-    const targetCount = selectedMember === 'all' ? dm.length : 1;
+    const targetCount = selectedMember === 'all' ? deptMembers.length : 1;
     const unrecorded = targetCount - members;
-    const bad = records.filter(r => r.condition==='不調'||r.condition==='だるい').length;
+    const bad = records.filter(r => r.condition === '不調' || r.condition === 'だるい').length;
     document.getElementById('day-summary').innerHTML = `
       <div class="day-stat"><div class="ds-num">${total}</div><div class="ds-label">記録件数</div></div>
       <div class="day-stat"><div class="ds-num">${members}</div><div class="ds-label">記録メンバー</div></div>
-      <div class="day-stat"><div class="ds-num" style="color:${unrecorded>0?'var(--danger)':'var(--ok)'}">${unrecorded}</div><div class="ds-label">未記録</div></div>
-      <div class="day-stat"><div class="ds-num" style="color:${bad>0?'var(--warn)':'var(--ok)'}">${bad}</div><div class="ds-label">体調不良</div></div>`;
+      <div class="day-stat"><div class="ds-num" style="color:${unrecorded > 0 ? 'var(--danger)' : 'var(--ok)'}">${unrecorded}</div><div class="ds-label">未記録</div></div>
+      <div class="day-stat"><div class="ds-num" style="color:${bad > 0 ? 'var(--warn)' : 'var(--ok)'}">${bad}</div><div class="ds-label">体調不良</div></div>`;
+  },
+
+  downloadDayCsv() {
+    if (!allDayRecords.length) { alert('記録がないよ'); return; }
+    const header = ['時刻', '名前', '部署', '体調', 'コメント'];
+    const rows = allDayRecords.map(r => [r.time || '', r.name, r.dept || getMemberDept(r.name), r.condition || '', r.comment || '']);
+    downloadCsv_(`水分補給記録_日次_${currentDay}.csv`, [header, ...rows]);
   },
 
   prevDay() {
@@ -356,50 +348,11 @@ const Admin = {
     this.loadDay();
   },
 
-  // ===== 管理者通知登録 =====
-  async registerNotification() {
-    const statusEl = document.getElementById('admin-notify-status');
-    if (!('Notification' in window)) {
-      statusEl.textContent = '❌ このブラウザは通知に対応していないよ';
-      return;
-    }
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      statusEl.textContent = '❌ 通知が拒否されたよ。設定から許可してね';
-      return;
-    }
-    try {
-      firebase.initializeApp({
-        apiKey: 'AIzaSyAX1QmJoIVN67GKMoXV1oIbNmV1bk-E2aM',
-        authDomain: 'hydration-850bd.firebaseapp.com',
-        projectId: 'hydration-850bd',
-        storageBucket: 'hydration-850bd.firebasestorage.app',
-        messagingSenderId: '385339912693',
-        appId: '1:385339912693:web:4db23ab0e1e6f8c35630bc'
-      });
-    } catch(e) {}
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const messaging = firebase.messaging();
-      const token = await messaging.getToken({
-        vapidKey: 'BF3hSqNizcMk5kYnP7-c-nneSnNIh8cCMQdCp-kV0UP6AmsbWSd7OB06YQ3yC23Ds86ykT-CNm94UIgEYCxMHEw',
-        serviceWorkerRegistration: reg
-      });
-      await gasPost({ action: 'registerAdminToken', token });
-      localStorage.setItem('admin_notify_registered', '1');
-      document.querySelector('.admin-notify-bar').style.display = 'none';
-    } catch(e) {
-      statusEl.textContent = '❌ エラー: ' + e.message;
-    }
-  },
-
   // ===== トレンドグラフ =====
   renderTrendChart() {
     const endDate = new Date(currentWeekStart);
     endDate.setDate(endDate.getDate() + 6);
-    const startStr = toDateStr(currentWeekStart);
-    const endStr = toDateStr(endDate);
-    const dates = getDatesInRange(startStr, endStr);
+    const dates = getDatesInRange(toDateStr(currentWeekStart), toDateStr(endDate));
     const deptMembers = (DEPARTMENTS.find(d => d.name === selectedDept) || DEPARTMENTS[0]).members;
 
     document.getElementById('trend-week-label').textContent =
@@ -426,17 +379,14 @@ const Admin = {
     const gap = chartW / dates.length;
     const barW = gap * 0.6;
 
-    // グリッド線
     let grid = '';
-    const steps = 4;
-    for (let i = 0; i <= steps; i++) {
-      const y = PAD.top + (chartH / steps) * i;
-      const val = Math.round(maxCount * (steps - i) / steps);
+    for (let i = 0; i <= 4; i++) {
+      const y = PAD.top + (chartH / 4) * i;
+      const val = Math.round(maxCount * (4 - i) / 4);
       grid += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="#1e293b" stroke-width="1"/>`;
       grid += `<text x="${PAD.left - 5}" y="${y + 4}" text-anchor="end" font-size="10" fill="#64748b">${val}</text>`;
     }
 
-    // 棒グラフ
     let bars = '';
     dayData.forEach((day, i) => {
       const cx = PAD.left + i * gap + gap / 2;
@@ -459,29 +409,22 @@ const Admin = {
         if (day.total === 0) {
           bars += `<rect x="${bx}" y="${PAD.top + chartH - 3}" width="${barW}" height="3" fill="#334155" rx="1"/>`;
         }
-        if (day.total > 0) {
-          bars += `<text x="${cx}" y="${PAD.top + chartH - dayData.reduce((mx,d)=>Math.max(mx,d.total),0)/maxCount*chartH - 6}" text-anchor="middle" font-size="10" fill="#94a3b8">${day.total}</text>`;
-        }
       }
 
-      // X軸ラベル
-      const dateLabel = day.d.slice(5).replace('-', '/');
-      bars += `<text x="${cx}" y="${H - 30}" text-anchor="middle" font-size="10" fill="#64748b">${dateLabel}</text>`;
+      bars += `<text x="${cx}" y="${H - 30}" text-anchor="middle" font-size="10" fill="#64748b">${day.d.slice(5).replace('-', '/')}</text>`;
       bars += `<text x="${cx}" y="${H - 14}" text-anchor="middle" font-size="12" fill="${dowColor}" font-weight="bold">${DOW[day.dow]}</text>`;
     });
 
-    const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
-      ${grid}${bars}
-    </svg>`;
-    document.getElementById('trend-chart').innerHTML = svg;
+    document.getElementById('trend-chart').innerHTML =
+      `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+        ${grid}${bars}
+      </svg>`;
 
-    // 凡例
     document.getElementById('trend-legend').innerHTML =
       [...CONDITIONS].reverse().map(c =>
         `<span class="trend-leg-item"><span style="background:${COLORS[c]}" class="trend-leg-dot"></span>${c}</span>`
       ).join('');
 
-    // サマリー（週計）
     const workDays = dayData.filter(d => !d.isOff);
     const totalRecs = dayData.reduce((s, d) => s + d.total, 0);
     const badRecs = dayData.reduce((s, d) => s + d.counts['不調'] + d.counts['だるい'], 0);
@@ -489,8 +432,25 @@ const Admin = {
     document.getElementById('trend-summary').innerHTML = `
       <div class="day-stat"><div class="ds-num">${totalRecs}</div><div class="ds-label">週間記録件数</div></div>
       <div class="day-stat"><div class="ds-num">${recordedDays}<span style="font-size:.85rem;color:var(--sub)">/${workDays.length}日</span></div><div class="ds-label">記録のあった日</div></div>
-      <div class="day-stat"><div class="ds-num" style="color:${badRecs > 0 ? 'var(--warn)' : 'var(--ok)'}">${badRecs}</div><div class="ds-label">体調不良件数</div></div>
-    `;
+      <div class="day-stat"><div class="ds-num" style="color:${badRecs > 0 ? 'var(--warn)' : 'var(--ok)'}">${badRecs}</div><div class="ds-label">体調不良件数</div></div>`;
+  },
+
+  // ===== 管理者通知登録 =====
+  async registerNotification() {
+    const statusEl = document.getElementById('admin-notify-status');
+    if (!('Notification' in window)) { statusEl.textContent = '❌ このブラウザは通知に対応していないよ'; return; }
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') { statusEl.textContent = '❌ 通知が拒否されたよ'; return; }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const messaging = firebase.messaging();
+      const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+      await db.collection('adminTokens').doc('main').set({ token, updatedAt: new Date().toISOString() });
+      localStorage.setItem('admin_notify_registered', '1');
+      document.querySelector('.admin-notify-bar').style.display = 'none';
+    } catch (e) {
+      statusEl.textContent = '❌ エラー: ' + e.message;
+    }
   },
 
   // ===== 詳細モーダル =====
@@ -498,18 +458,16 @@ const Admin = {
     const recs = allWeekRecords.filter(r => r.date === date && r.name === name);
     document.getElementById('modal-title').textContent = `${date}　${name}さんの記録（${recs.length}件）`;
     const body = document.getElementById('modal-body');
-    if (!recs.length) {
-      body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px">記録なし</td></tr>';
-    } else {
-      body.innerHTML = recs.map(r => `
-        <tr>
-          <td>${r.time || ''}</td>
-          <td>${r.name}</td>
-          <td><span class="dept-tag">${r.dept || getMemberDept(r.name)}</span></td>
-          <td>${CONDITION_EMOJI[r.condition] || '💧'} ${r.condition || ''}</td>
-          <td style="color:var(--sub)">${r.comment || '-'}</td>
-        </tr>`).join('');
-    }
+    body.innerHTML = recs.length
+      ? recs.map(r => `
+          <tr>
+            <td>${r.time || ''}</td>
+            <td>${r.name}</td>
+            <td><span class="dept-tag">${r.dept || getMemberDept(r.name)}</span></td>
+            <td>${CONDITION_EMOJI[r.condition] || '💧'} ${r.condition || ''}</td>
+            <td style="color:var(--sub)">${r.comment || '-'}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px">記録なし</td></tr>';
     document.getElementById('modal').classList.remove('hidden');
   },
   closeModal(e) {
@@ -519,26 +477,6 @@ const Admin = {
   }
 };
 
-function downloadCsv_(filename, rows) {
-  const bom = '﻿';
-  const csv = bom + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
-  a.download = filename;
-  a.click();
-}
-
-function wbgtHeaderColor_(level) {
-  switch(level) {
-    case 'ほぼ安全': return '#ffffff';
-    case '注意':     return '#fde047';
-    case '警戒':     return '#fb923c';
-    case '厳重警戒': return '#fca5a5';
-    case '危険':     return '#fca5a5';
-    default:         return '#ffffff';
-  }
-}
-
 // ===== ユーティリティ =====
 async function gasGet(params) {
   const qs = new URLSearchParams({ ...params, _t: Date.now() }).toString();
@@ -546,9 +484,17 @@ async function gasGet(params) {
   return res.json();
 }
 
-async function gasPost(body) {
-  const res = await fetch(GAS_URL, {method:'POST', body:JSON.stringify(body)});
-  return res.json();
+function downloadCsv_(filename, rows) {
+  const bom = '﻿';
+  const csv = bom + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = filename;
+  a.click();
+}
+
+function wbgtHeaderColor_(level) {
+  return { 'ほぼ安全': '#bbf7d0', '注意': '#fef08a', '警戒': '#fed7aa', '厳重警戒': '#fecaca', '危険': '#fecaca' }[level] || '#ffffff';
 }
 
 function toDateStr(d) {
@@ -561,7 +507,7 @@ function formatDate(d) {
 
 function getWeekStart(d) {
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // 月曜始まり
+  const diff = day === 0 ? -6 : 1 - day;
   const mon = new Date(d);
   mon.setDate(d.getDate() + diff);
   mon.setHours(0, 0, 0, 0);
@@ -576,5 +522,52 @@ function getDatesInRange(startStr, endStr) {
   return dates;
 }
 
-// ===== 起動 =====
+// ===== 休日管理 =====
+const holidaysCol = db.collection('holidays');
+
+const HolidayAdmin = {
+  async load() {
+    const el = document.getElementById('holiday-list');
+    try {
+      const snap = await holidaysCol.orderBy('date', 'asc').get();
+      if (snap.empty) { el.innerHTML = '<div class="holiday-empty">登録された休日はないよ</div>'; return; }
+      el.innerHTML = snap.docs.map(doc => {
+        const d = doc.data();
+        return `<div class="holiday-row-item">
+          <span class="holiday-date">${d.date}</span>
+          <span class="holiday-type-badge">${d.type || ''}</span>
+          <span class="holiday-memo">${d.memo || ''}</span>
+          <button class="btn-holiday-del" onclick="HolidayAdmin.delete('${doc.id}')">削除</button>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      el.innerHTML = '<div class="holiday-empty">読み込みエラー</div>';
+      console.error(e);
+    }
+  },
+
+  async add() {
+    const date = document.getElementById('holiday-input-date').value;
+    const type = document.getElementById('holiday-input-type').value;
+    const memo = document.getElementById('holiday-input-memo').value.trim();
+    if (!date) { alert('日付を選んでね'); return; }
+    await holidaysCol.doc(date).set({ date, type, memo });
+    document.getElementById('holiday-input-date').value = '';
+    document.getElementById('holiday-input-memo').value = '';
+    this.load();
+  },
+
+  async delete(id) {
+    if (!confirm(`${id} を削除してもいい？`)) return;
+    await holidaysCol.doc(id).delete();
+    this.load();
+  }
+};
+
+// Admin に委譲
+Object.assign(Admin, {
+  loadHolidays() { HolidayAdmin.load(); },
+  addHoliday()   { HolidayAdmin.add(); }
+});
+
 window.addEventListener('DOMContentLoaded', () => Pin.init());

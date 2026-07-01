@@ -46,17 +46,15 @@
     </div>
   </header>
 
-  <!-- タブ -->
   <nav class="tab-nav">
     <button class="tab-btn active" onclick="Admin.switchTab('week', this)">週次ビュー</button>
     <button class="tab-btn" onclick="Admin.switchTab('day', this)">日次ビュー</button>
     <button class="tab-btn" onclick="Admin.switchTab('trend', this)">📈 トレンド</button>
+    <button class="tab-btn" onclick="Admin.switchTab('holidays', this)">📅 休日</button>
   </nav>
 
-  <!-- 部署フィルター -->
   <div id="admin-dept-filter" class="admin-dept-filter"></div>
 
-  <!-- 管理者通知設定バナー -->
   <div class="admin-notify-bar">
     <span id="admin-notify-status">🔔 未記録アラートを受け取るにはこの端末を登録してね</span>
     <button class="admin-notify-btn" onclick="Admin.registerNotification()">通知を受け取る</button>
@@ -64,7 +62,7 @@
 
   <main class="main">
 
-    <!-- ===== 週次ビュー ===== -->
+    <!-- 週次ビュー -->
     <section id="tab-week" class="tab-content active">
       <div class="toolbar">
         <button class="nav-btn" onclick="Admin.prevWeek()">◀</button>
@@ -73,25 +71,22 @@
         <button class="today-btn" onclick="Admin.goToThisWeek()">今週</button>
         <button class="csv-btn" onclick="Admin.downloadWeekCsv()">⬇ CSV</button>
       </div>
-
       <div class="legend">
         <span class="leg-item"><span class="badge badge-ok">3</span> 記録あり（件数）</span>
         <span class="leg-item"><span class="badge badge-none">-</span> 未記録</span>
         <span class="leg-item"><span class="badge badge-off">休</span> 休日</span>
       </div>
-
       <div class="table-wrap">
         <table id="week-table" class="week-table">
           <thead><tr id="week-header"></tr></thead>
           <tbody id="week-body"></tbody>
         </table>
       </div>
-
       <div class="summary-cards" id="summary-cards"></div>
     </section>
 
-    <!-- ===== 日次ビュー ===== -->
-    <section id="tab-day" class="tab-content hidden">
+    <!-- 日次ビュー -->
+    <section id="tab-day" class="tab-content">
       <div class="toolbar">
         <button class="nav-btn" onclick="Admin.prevDay()">◀</button>
         <input type="date" id="day-picker" class="day-picker" onchange="Admin.loadDay()">
@@ -99,29 +94,51 @@
         <button class="today-btn" onclick="Admin.goToToday()">今日</button>
         <button class="csv-btn" onclick="Admin.downloadDayCsv()">⬇ CSV</button>
       </div>
-
-      <!-- WBGT表示 -->
       <div id="day-wbgt" class="day-wbgt-bar"></div>
-
-      <!-- メンバーフィルター -->
       <div class="member-filter" id="member-filter"></div>
-
       <div id="day-summary" class="day-summary"></div>
-
       <div class="table-wrap">
         <table class="day-table">
-          <thead>
-            <tr>
-              <th>時刻</th><th>名前</th><th>部署</th><th>体調</th><th>コメント</th>
-            </tr>
-          </thead>
+          <thead><tr><th>時刻</th><th>名前</th><th>部署</th><th>体調</th><th>コメント</th></tr></thead>
           <tbody id="day-body"></tbody>
         </table>
       </div>
     </section>
 
-    <!-- ===== トレンドビュー ===== -->
-    <section id="tab-trend" class="tab-content hidden">
+    <!-- 休日管理 -->
+    <section id="tab-holidays" class="tab-content">
+      <div class="card" style="margin:16px">
+        <div class="card-label" style="margin-bottom:12px">📅 休日を追加</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <div style="font-size:.78rem;color:var(--sub);margin-bottom:4px">日付</div>
+            <input type="date" id="holiday-input-date" class="holiday-input-date">
+          </div>
+          <div>
+            <div style="font-size:.78rem;color:var(--sub);margin-bottom:4px">区分</div>
+            <select id="holiday-input-type" class="holiday-input-type">
+              <option>祝日</option>
+              <option>会社休日</option>
+              <option>夏季休暇</option>
+              <option>年末年始</option>
+              <option>その他</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:.78rem;color:var(--sub);margin-bottom:4px">メモ（任意）</div>
+            <input type="text" id="holiday-input-memo" class="holiday-input-memo" placeholder="例：元日">
+          </div>
+          <button class="btn-holiday-add" onclick="Admin.addHoliday()">追加</button>
+        </div>
+      </div>
+      <div class="card" style="margin:0 16px 16px">
+        <div class="card-label" style="margin-bottom:12px">登録済み休日</div>
+        <div id="holiday-list" class="holiday-list">読み込み中...</div>
+      </div>
+    </section>
+
+    <!-- トレンド -->
+    <section id="tab-trend" class="tab-content">
       <div class="trend-header">
         <span id="trend-week-label" class="week-label"></span>
         <div style="display:flex;gap:6px">
@@ -138,7 +155,7 @@
   </main>
 </div>
 
-<!-- ===== 詳細モーダル ===== -->
+<!-- 詳細モーダル -->
 <div id="modal" class="modal-overlay hidden" onclick="Admin.closeModal(event)">
   <div class="modal">
     <div id="modal-title" class="modal-title"></div>
@@ -152,6 +169,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

@@ -1,78 +1,73 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="水分記録">
   <title>水分補給記録</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-  <!-- ===== PINロック画面 ===== -->
-  <div id="pin-screen" class="pin-screen hidden">
-    <div class="pin-box">
-      <div class="pin-icon">💧</div>
-      <div class="pin-title">水分補給記録</div>
-      <div class="pin-subtitle">PINコードを入力してね</div>
-      <div id="pin-dots" class="pin-dots">
-        <span class="pin-dot"></span>
-        <span class="pin-dot"></span>
-        <span class="pin-dot"></span>
-        <span class="pin-dot"></span>
-      </div>
-      <div id="pin-error" class="pin-error hidden">PINが違うよ、もう一度！</div>
-      <div class="pin-keypad">
-        <button class="pin-key" onclick="Pin.input('1')">1</button>
-        <button class="pin-key" onclick="Pin.input('2')">2</button>
-        <button class="pin-key" onclick="Pin.input('3')">3</button>
-        <button class="pin-key" onclick="Pin.input('4')">4</button>
-        <button class="pin-key" onclick="Pin.input('5')">5</button>
-        <button class="pin-key" onclick="Pin.input('6')">6</button>
-        <button class="pin-key" onclick="Pin.input('7')">7</button>
-        <button class="pin-key" onclick="Pin.input('8')">8</button>
-        <button class="pin-key" onclick="Pin.input('9')">9</button>
-        <button class="pin-key pin-key-empty"></button>
-        <button class="pin-key" onclick="Pin.input('0')">0</button>
-        <button class="pin-key pin-key-del" onclick="Pin.delete()">⌫</button>
-      </div>
+<!-- ===== PINロック ===== -->
+<div id="pin-screen" class="pin-screen">
+  <div class="pin-box">
+    <div class="pin-icon">💧</div>
+    <div class="pin-title">水分補給記録</div>
+    <div class="pin-subtitle">PINを入力してね</div>
+    <div id="pin-dots" class="pin-dots">
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <div id="pin-error" class="pin-error hidden">PINが違うよ、もう一度！</div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="Pin.input('1')">1</button>
+      <button class="pin-key" onclick="Pin.input('2')">2</button>
+      <button class="pin-key" onclick="Pin.input('3')">3</button>
+      <button class="pin-key" onclick="Pin.input('4')">4</button>
+      <button class="pin-key" onclick="Pin.input('5')">5</button>
+      <button class="pin-key" onclick="Pin.input('6')">6</button>
+      <button class="pin-key" onclick="Pin.input('7')">7</button>
+      <button class="pin-key" onclick="Pin.input('8')">8</button>
+      <button class="pin-key" onclick="Pin.input('9')">9</button>
+      <button class="pin-key pin-key-empty"></button>
+      <button class="pin-key" onclick="Pin.input('0')">0</button>
+      <button class="pin-key pin-key-del" onclick="Pin.delete()">⌫</button>
     </div>
   </div>
+</div>
 
-  <!-- ===== ヘッダー ===== -->
+<!-- ===== メイン ===== -->
+<div id="app" class="hidden">
+
   <header class="header">
     <div class="header-inner">
       <div class="header-title">
         <span class="header-icon">💧</span>
-        <span>水分補給記録</span>
+        水分補給記録
+        <span id="sync-badge" class="sync-badge"><span class="sync-dot"></span>同期中</span>
       </div>
       <div class="header-right">
-        <div id="date-display" class="header-date"></div>
-        <button class="btn-refresh" id="btn-refresh" onclick="App.refreshAll()" title="更新">🔄</button>
+        <span id="header-date" class="header-date"></span>
+        <button class="btn-refresh" id="refresh-btn" onclick="App.refreshRecords(this)">↻</button>
       </div>
     </div>
   </header>
 
-  <!-- ===== タブ ===== -->
   <nav class="tab-nav">
-    <button class="tab-btn active" data-tab="record">記録</button>
-    <button class="tab-btn" data-tab="history">履歴</button>
-    <button class="tab-btn" data-tab="settings">設定</button>
+    <button class="tab-btn active" onclick="App.switchTab('record', this)">記録</button>
+    <button class="tab-btn" onclick="App.switchTab('history', this)">履歴</button>
+    <button class="tab-btn" onclick="App.switchTab('settings', this)">設定</button>
   </nav>
 
-  <!-- ===== メインコンテンツ ===== -->
   <main class="main">
 
     <!-- 記録タブ -->
     <section id="tab-record" class="tab-content active">
-
-      <!-- 部署・メンバー選択 -->
       <div class="card">
         <div class="dept-row">
           <div class="card-label" style="margin:0">部署</div>
@@ -82,7 +77,6 @@
         <div id="member-select" class="member-grid"></div>
       </div>
 
-      <!-- WBGT表示 -->
       <div class="card wbgt-card" id="wbgt-card">
         <div class="wbgt-card-label">🌡 現在の暑さ指数（三国）</div>
         <div id="wbgt-card-body" class="wbgt-card-body">
@@ -90,15 +84,13 @@
         </div>
       </div>
 
-      <!-- 水分補給ボタン -->
       <div class="card record-card">
-        <button id="btn-drink" class="btn-drink" onclick="App.openRecordModal()">
+        <button class="btn-drink" onclick="App.openRecordModal()">
           <span class="btn-drink-icon">💧</span>
           <span class="btn-drink-text">水分を摂った！</span>
         </button>
       </div>
 
-      <!-- 休日設定（記録タブ） -->
       <div class="card">
         <div class="holiday-row">
           <span style="font-size:.9rem;font-weight:600;">🏖 今日は休み（有給など）</span>
@@ -110,93 +102,109 @@
         <div id="holiday-hint" class="hint">ONにすると今日の通知が届かないよ</div>
       </div>
 
-      <!-- 今日の記録 -->
       <div class="card">
         <div class="card-label-row">
-          <div class="card-label">今日の記録</div>
-          <div id="last-updated" class="last-updated"></div>
+          <span class="card-label">今日の記録</span>
+          <span id="last-updated" class="last-updated"></span>
         </div>
-        <div id="today-records" class="record-list">
-          <div class="empty-msg">まだ記録がないよ</div>
-        </div>
+        <div id="today-records" class="record-list"><div class="empty-msg">まだ記録がないよ</div></div>
       </div>
-
     </section>
 
     <!-- 履歴タブ -->
     <section id="tab-history" class="tab-content">
       <div class="card">
-        <div class="card-label">過去の記録</div>
-        <input type="date" id="history-date" class="date-input">
-        <div id="history-records" class="record-list">
-          <div class="empty-msg">日付を選択してね</div>
-        </div>
+        <div class="card-label">日付を選んで履歴を見る</div>
+        <input type="date" id="history-date" class="date-input" style="margin-top:8px">
+        <div id="history-records" class="record-list"></div>
       </div>
     </section>
 
     <!-- 設定タブ -->
     <section id="tab-settings" class="tab-content">
       <div class="card">
-        <div class="card-label">🔔 通知許可</div>
-        <button class="btn-secondary" onclick="App.requestNotification()">通知を許可する</button>
-        <div id="notify-status" class="hint"></div>
+        <div class="card-label">個人休（今日）</div>
+        <div class="holiday-row" style="margin-top:12px">
+          <span>今日を休みに設定する</span>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="holiday-toggle" onchange="App.toggleHoliday(this.checked)">
+            <span class="toggle"></span>
+          </label>
+        </div>
+        <p id="holiday-hint" class="hint"></p>
       </div>
+
       <div class="card">
-        <div class="card-label">📋 通知スケジュール</div>
-        <ul class="schedule-list">
-          <li><span class="time">07:50</span><span>朝の水分補給チェック</span></li>
-          <li><span class="time">10:00</span><span>午前休憩</span></li>
-          <li><span class="time">12:50</span><span>午後スタート</span></li>
-          <li><span class="time">15:00</span><span>午後休憩</span></li>
-          <li><span class="time">17:00</span><span>未記録者のみアラート</span></li>
+        <div class="card-label">通知設定</div>
+        <p id="notify-status" class="hint" style="margin-top:8px"></p>
+        <button class="btn-secondary" style="margin-top:12px" onclick="App.requestNotification()">通知を許可する</button>
+      </div>
+
+      <div class="card">
+        <div class="card-label">通知スケジュール</div>
+        <ul class="schedule-list" style="margin-top:12px">
+          <li><span class="time">07:48</span> 朝の水分補給チェック</li>
+          <li><span class="time">09:58</span> 午前休憩</li>
+          <li><span class="time">12:48</span> 午後スタート</li>
+          <li><span class="time">14:58</span> 午後休憩</li>
+          <li><span class="time">16:48</span> 夕方チェック</li>
         </ul>
+      </div>
+
+      <div class="card">
+        <a href="admin.html" style="display:block;text-align:center;color:var(--text-sub);font-size:.85rem;text-decoration:none">
+          管理者ダッシュボード →
+        </a>
       </div>
     </section>
 
   </main>
+</div>
 
-  <!-- ===== 記録モーダル ===== -->
-  <div id="modal-overlay" class="modal-overlay hidden" onclick="App.closeModal(event)">
-    <div class="modal">
-      <div class="modal-title">💧 水分補給を記録</div>
+<!-- 記録モーダル -->
+<div id="record-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-title">💧 水分補給を記録</div>
 
-      <div class="modal-section">
-        <div class="modal-label">体調はどう？</div>
-        <div class="condition-grid">
-          <button class="cond-btn" data-value="良好" onclick="App.selectCondition(this)">😊<br>良好</button>
-          <button class="cond-btn" data-value="普通" onclick="App.selectCondition(this)">😐<br>普通</button>
-          <button class="cond-btn" data-value="だるい" onclick="App.selectCondition(this)">😓<br>だるい</button>
-          <button class="cond-btn" data-value="不調" onclick="App.selectCondition(this)">🤒<br>不調</button>
-        </div>
-      </div>
-
-      <div class="modal-section">
-        <div class="modal-label">塩分補給は？</div>
-        <div class="salt-grid">
-          <button class="salt-btn active" data-value="なし" onclick="App.selectSalt(this)">💧<br><span>水のみ</span></button>
-          <button class="salt-btn" data-value="あり" onclick="App.selectSalt(this)">🧂<br><span>塩分あり</span></button>
-        </div>
-      </div>
-
-      <div class="modal-section">
-        <div class="modal-label">コメント（任意）</div>
-        <textarea id="comment-input" class="comment-input" placeholder="気になることがあれば..."></textarea>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="App.closeModal()">キャンセル</button>
-        <button class="btn-submit" onclick="App.submitRecord()">記録する</button>
+    <div class="modal-section">
+      <div class="modal-label">体調はどう？</div>
+      <div class="condition-grid">
+        <button class="cond-btn" onclick="App.selectCondition('良好', this)">😊<br>良好</button>
+        <button class="cond-btn" onclick="App.selectCondition('普通', this)">😐<br>普通</button>
+        <button class="cond-btn" onclick="App.selectCondition('だるい', this)">😓<br>だるい</button>
+        <button class="cond-btn" onclick="App.selectCondition('不調', this)">🤒<br>不調</button>
       </div>
     </div>
+
+    <div class="modal-section">
+      <div class="modal-label">塩分は？</div>
+      <div class="salt-grid">
+        <button class="salt-btn active" id="salt-water" onclick="App.selectSalt('なし', this)">
+          💧<span>水のみ</span>
+        </button>
+        <button class="salt-btn" id="salt-yes" onclick="App.selectSalt('あり', this)">
+          🧂<span>塩分あり</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">コメント（任意）</div>
+      <textarea id="comment-input" class="comment-input" placeholder="気になることがあれば..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="App.closeModal()">キャンセル</button>
+      <button class="btn-submit" id="submit-btn" onclick="App.submitRecord()">記録する</button>
+    </div>
   </div>
+</div>
 
-  <!-- ===== トースト ===== -->
-  <div id="toast" class="toast hidden"></div>
+<div id="toast" class="toast hidden"></div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
-  <script src="app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="app.js"></script>
 </body>
-
 </html>
