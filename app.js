@@ -133,7 +133,7 @@ async function loadTodayRecords() {
     const snap = await recordsCol
       .where('date', '==', today)
       .get();
-    const records = snap.docs.map(d => d.data()).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    const records = snap.docs.map(d => d.data()).sort((a, b) => (b.time || '').localeCompare(a.time || ''));
     const deptRecords = records.filter(r =>
       (r.dept || getMemberDept(r.name)) === state.dept
     );
